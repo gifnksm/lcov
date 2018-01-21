@@ -19,7 +19,7 @@ $(WORKDIR)/%.o: src/%.c | $(WORKDIR)/
 $(WORKDIR)/main: $(OBJS) | $(WORKDIR)/
 	$(CC) $(LDFLAGS) $^ -o $@
 
-lcov: report.info report.checksum.info
+lcov: report.info report_checksum.info
 report.info: LCOVFLAGS+=
 report_checksum.info: LCOVFLAGS+= --checksum
 

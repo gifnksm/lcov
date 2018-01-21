@@ -44,9 +44,9 @@ SF:/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c
 FN:5,add
 FN:10,sub
 FN:15,main
-FNDA:10,add
 FNDA:0,sub
 FNDA:1,main
+FNDA:10,add
 FNF:3
 FNH:2
 BRDA:20,1,0,10
