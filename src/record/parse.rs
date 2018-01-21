@@ -5,11 +5,11 @@ use std::str::FromStr;
 
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
 pub enum Error {
-    #[fail(display = "Field {} not found", _0)] FieldNotFound(&'static str),
-    #[fail(display = "Too many fields found")] TooManyFields,
-    #[fail(display = "Failed to parse field `{}`: {}", _0, _1)]
+    #[fail(display = "field `{}` not found", _0)] FieldNotFound(&'static str),
+    #[fail(display = "too many fields found")] TooManyFields,
+    #[fail(display = "invalid value of field `{}`: {}", _0, _1)]
     ParseIntError(&'static str, #[cause] ParseIntError),
-    #[fail(display = "Unknown record")] UnknownRecord,
+    #[fail(display = "unknown record")] UnknownRecord,
 }
 
 macro_rules! replace_expr {
