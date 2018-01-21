@@ -10,3 +10,6 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 failure = "0.1"
+
+[dev-dependencies]
+glob = "0.2"
