@@ -61,13 +61,13 @@ fn function_data() {
 
 #[test]
 fn functions_found_hit() {
-    fn check_ok(n: u64) {
+    fn check_ok(n: u32) {
         check_parse_ok(&format!("FNF:{}", n), &FunctionsFound { found: n });
         check_parse_ok(&format!("FNH:{}", n), &FunctionsHit { hit: n });
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u64::max_value());
+    check_ok(u32::max_value());
 }
 
 #[test]
@@ -94,13 +94,13 @@ fn branch_data() {
 
 #[test]
 fn branches_found_hit() {
-    fn check_ok(n: u64) {
+    fn check_ok(n: u32) {
         check_parse_ok(&format!("BRF:{}", n), &BranchesFound { found: n });
         check_parse_ok(&format!("BRH:{}", n), &BranchesHit { hit: n });
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u64::max_value());
+    check_ok(u32::max_value());
 }
 
 #[test]
@@ -131,13 +131,13 @@ fn line_data() {
 
 #[test]
 fn lines_found_hit() {
-    fn check_ok(n: u64) {
+    fn check_ok(n: u32) {
         check_parse_ok(&format!("LF:{}", n), &LinesFound { found: n });
         check_parse_ok(&format!("LH:{}", n), &LinesHit { hit: n });
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u64::max_value());
+    check_ok(u32::max_value());
 }
 
 #[test]

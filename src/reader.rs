@@ -1,6 +1,7 @@
 use super::{ParseRecordError, Record};
 use std::io::{self, BufRead, Lines};
 
+#[derive(Debug)]
 pub struct Reader<B> {
     lines: Lines<B>,
     line: u32,

@@ -6,7 +6,7 @@ mod display;
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Record {
     /// Represents a `TN` record.
     TestName {
@@ -36,12 +36,12 @@ pub enum Record {
     /// Represents a `FNF` record.
     FunctionsFound {
         /// Number of functions found.
-        found: u64,
+        found: u32,
     },
     /// Represents a `FNH` record.
     FunctionsHit {
         /// Number of functions hit.
-        hit: u64,
+        hit: u32,
     },
 
     /// Represents a `BRDA` record.
@@ -60,12 +60,12 @@ pub enum Record {
     /// Represents a `BRF` record.
     BranchesFound {
         /// Number of branches found.
-        found: u64,
+        found: u32,
     },
     /// Represents a `BRH` record.
     BranchesHit {
         /// Number of branches hit.
-        hit: u64,
+        hit: u32,
     },
 
     /// Represents a `DA` record.
@@ -80,19 +80,19 @@ pub enum Record {
     /// Represents a `LF` record.
     LinesFound {
         /// Number of instrumented line.
-        found: u64,
+        found: u32,
     },
     /// Represents a `LH` record.
     LinesHit {
         /// Number of lines with a non-zero execution count.
-        hit: u64,
+        hit: u32,
     },
 
     /// Represents a `end_of_record` record.
     EndOfRecord,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum RecordKind {
     TestName,
     SourceFile,
