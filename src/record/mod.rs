@@ -1,4 +1,4 @@
-pub use self::parse::Error as ParseError;
+pub use self::parse::ParseRecordError;
 use std::path::PathBuf;
 
 mod parse;
@@ -77,17 +77,77 @@ pub enum Record {
         /// Checksum for each instrumented line.
         checksum: Option<String>,
     },
-    /// Represents a `LH` record.
-    LinesHit {
-        /// Number of lines with a non-zero execution count.
-        hit: u64,
-    },
     /// Represents a `LF` record.
     LinesFound {
         /// Number of instrumented line.
         found: u64,
     },
+    /// Represents a `LH` record.
+    LinesHit {
+        /// Number of lines with a non-zero execution count.
+        hit: u64,
+    },
 
     /// Represents a `end_of_record` record.
     EndOfRecord,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum RecordKind {
+    TestName,
+    SourceFile,
+    FunctionName,
+    FunctionData,
+    FunctionsFound,
+    FunctionsHit,
+    BranchData,
+    BranchesFound,
+    BranchesHit,
+    LineData,
+    LinesFound,
+    LinesHit,
+    EndOfRecord,
+}
+
+macro_rules! kind_impl {
+    ($rec:expr; $($kind:ident),*) => {
+        match $rec {
+            $(&Record::$kind { .. } => RecordKind::$kind),*
+        }
+    }
+}
+
+impl Record {
+    pub fn kind(&self) -> RecordKind {
+        kind_impl!{
+            self;
+            TestName, SourceFile,
+            FunctionName, FunctionData, FunctionsFound, FunctionsHit,
+            BranchData, BranchesFound, BranchesHit,
+            LineData, LinesFound, LinesHit,
+            EndOfRecord
+        }
+    }
+}
+
+impl RecordKind {
+    pub fn as_str(&self) -> &'static str {
+        use RecordKind::*;
+
+        match *self {
+            TestName => "TN",
+            SourceFile => "SF",
+            FunctionName => "FN",
+            FunctionData => "FNDA",
+            FunctionsFound => "FNF",
+            FunctionsHit => "FNH",
+            BranchData => "BRDA",
+            BranchesFound => "BRF",
+            BranchesHit => "BRH",
+            LineData => "DA",
+            LinesFound => "LF",
+            LinesHit => "LH",
+            EndOfRecord => "end_of_record",
+        }
+    }
 }

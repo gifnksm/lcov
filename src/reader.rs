@@ -25,7 +25,6 @@ pub enum Error {
     ParseRecord(u32, #[cause] ParseRecordError),
 }
 
-
 impl<B> Iterator for Reader<B>
 where
     B: BufRead,
