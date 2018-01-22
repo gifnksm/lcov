@@ -1,7 +1,6 @@
 use super::{Record, RecordKind};
 use std::collections::BTreeMap;
-use std::collections::btree_map;
-use std::mem;
+use std::iter;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
@@ -215,92 +214,29 @@ impl IntoIterator for Merger {
     type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self)
-    }
-}
-
-#[derive(Debug)]
-pub struct IntoIter {
-    state: IntoIterState,
-}
-
-impl IntoIter {
-    fn new(merger: Merger) -> Self {
         IntoIter {
-            state: IntoIterState::EmitTestName {
-                files: merger.files.into_iter(),
-            },
+            inner: Box::new(self.files.into_iter().flat_map(|(key, file)| {
+                iter::once(Record::TestName {
+                    name: key.test_name,
+                }).chain(iter::once(Record::SourceFile {
+                    path: key.source_file,
+                }))
+                    .chain(file.into_iter())
+                    .chain(iter::once(Record::EndOfRecord))
+            })),
         }
     }
 }
 
-#[derive(Debug)]
-enum IntoIterState {
-    EmitTestName {
-        files: btree_map::IntoIter<FileKey, File>,
-    },
-    EmitSourceFile {
-        source_file: PathBuf,
-        file: File,
-        files: btree_map::IntoIter<FileKey, File>,
-    },
-    EmitFileBody {
-        file: FileIntoIter,
-        files: btree_map::IntoIter<FileKey, File>,
-    },
-    End,
+pub struct IntoIter {
+    inner: Box<Iterator<Item = Record>>,
 }
 
 impl Iterator for IntoIter {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use self::IntoIterState::*;
-        loop {
-            return match mem::replace(&mut self.state, End) {
-                EmitTestName { mut files } => match files.next() {
-                    Some((key, file)) => {
-                        self.state = EmitSourceFile {
-                            source_file: key.source_file,
-                            file,
-                            files,
-                        };
-                        Some(Record::TestName {
-                            name: key.test_name,
-                        })
-                    }
-                    None => {
-                        self.state = End;
-                        continue;
-                    }
-                },
-
-                EmitSourceFile {
-                    source_file,
-                    file,
-                    files,
-                } => {
-                    self.state = EmitFileBody {
-                        file: file.into_iter(),
-                        files,
-                    };
-                    Some(Record::SourceFile { path: source_file })
-                }
-
-                EmitFileBody { mut file, files } => match file.next() {
-                    Some(rec) => {
-                        self.state = EmitFileBody { file, files };
-                        Some(rec)
-                    }
-                    None => {
-                        self.state = EmitTestName { files };
-                        Some(Record::EndOfRecord)
-                    }
-                },
-
-                End => None,
-            };
-        }
+        self.inner.next()
     }
 }
 
@@ -309,295 +245,136 @@ impl IntoIterator for File {
     type IntoIter = FileIntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        FileIntoIter::new(self)
-    }
-}
+        enum Func {
+            Line((String, u32)),
+            Data((String, u64)),
+            Found(bool, u32),
+            Hit(bool, u32),
+        }
+        let fn_line = self.fn_lines.into_iter().map(Func::Line);
+        let fn_data = self.fn_data.into_iter().map(Func::Data);
+        let fn_iter = fn_line
+            .chain(fn_data)
+            .chain(iter::once(Func::Found(false, 0)))
+            .chain(iter::once(Func::Hit(false, 0)))
+            .scan((0, 0), |st, mut rec| {
+                let do_emit = st.0 > 0;
+                match &mut rec {
+                    &mut Func::Line(..) => st.0 += 1,
+                    &mut Func::Data((_, ref mut count)) if *count > 0 => st.1 += 1,
+                    &mut Func::Data(..) => {}
+                    &mut Func::Found(ref mut emit, ref mut count) => {
+                        *emit = do_emit;
+                        *count = st.0
+                    }
+                    &mut Func::Hit(ref mut emit, ref mut hit) => {
+                        *emit = do_emit;
+                        *hit = st.1
+                    }
+                }
+                Some(rec)
+            })
+            .filter_map(|rec| match rec {
+                Func::Line((name, start_line)) => Some(Record::FunctionName { name, start_line }),
+                Func::Data((name, count)) => Some(Record::FunctionData { name, count }),
+                Func::Found(true, found) => Some(Record::FunctionsFound { found }),
+                Func::Found(false, _) => None,
+                Func::Hit(true, hit) => Some(Record::FunctionsHit { hit }),
+                Func::Hit(false, _) => None,
+            });
 
-#[derive(Debug)]
-struct FileIntoIter {
-    state: FileIntoIterState,
-}
+        enum Branch {
+            Data((BranchKey, Option<u64>)),
+            Found(bool, u32),
+            Hit(bool, u32),
+        }
+        let branch_iter = self.br_data
+            .into_iter()
+            .map(Branch::Data)
+            .chain(iter::once(Branch::Found(false, 0)))
+            .chain(iter::once(Branch::Hit(false, 0)))
+            .scan((0, 0), |st, mut rec| {
+                let do_emit = st.0 > 0;
+                debug_assert!(st.0 >= st.1);
+                match &mut rec {
+                    &mut Branch::Data((_, taken)) => {
+                        st.0 += 1;
+                        if taken.unwrap_or(0) > 0 {
+                            st.1 += 1;
+                        }
+                    }
+                    &mut Branch::Found(ref mut emit, ref mut found) => {
+                        *emit = do_emit;
+                        *found = st.0;
+                    }
+                    &mut Branch::Hit(ref mut emit, ref mut hit) => {
+                        *emit = do_emit;
+                        *hit = st.1;
+                    }
+                }
+                Some(rec)
+            })
+            .filter_map(|rec| match rec {
+                Branch::Data((key, taken)) => Some(Record::BranchData {
+                    line: key.line,
+                    block: key.block,
+                    branch: key.branch,
+                    taken: taken,
+                }),
+                Branch::Found(true, found) => Some(Record::BranchesFound { found }),
+                Branch::Found(false, _) => None,
+                Branch::Hit(true, hit) => Some(Record::BranchesHit { hit }),
+                Branch::Hit(false, _) => None,
+            });
 
-impl FileIntoIter {
-    fn new(file: File) -> Self {
+        enum Line {
+            Data((u32, LineData)),
+            Found(u32),
+            Hit(u32),
+        }
+        let line_iter = self.ln_data
+            .into_iter()
+            .map(Line::Data)
+            .chain(iter::once(Line::Found(0)))
+            .chain(iter::once(Line::Hit(0)))
+            .scan((0, 0), |st, mut rec| {
+                match &mut rec {
+                    &mut Line::Data((_, ref data)) => {
+                        st.0 += 1;
+                        if data.count > 0 {
+                            st.1 += 1;
+                        }
+                    }
+                    &mut Line::Found(ref mut found) => *found = st.0,
+                    &mut Line::Hit(ref mut hit) => *hit = st.1,
+                };
+                Some(rec)
+            })
+            .map(|rec| match rec {
+                Line::Data((line, data)) => Record::LineData {
+                    line,
+                    count: data.count,
+                    checksum: data.checksum,
+                },
+                Line::Found(found) => Record::LinesFound { found },
+                Line::Hit(hit) => Record::LinesHit { hit },
+            });
+
+        let iter = fn_iter.chain(branch_iter).chain(line_iter);
         FileIntoIter {
-            state: FileIntoIterState::EmitFuncName {
-                fn_found: 0,
-                fn_lines: file.fn_lines.into_iter(),
-                fn_data: file.fn_data,
-                br_data: file.br_data,
-                ln_data: file.ln_data,
-            },
+            inner: Box::new(iter),
         }
     }
 }
 
-#[derive(Debug)]
-enum FileIntoIterState {
-    EmitFuncName {
-        fn_found: u32,
-        fn_lines: btree_map::IntoIter<String, u32>,
-        fn_data: BTreeMap<String, u64>,
-        br_data: BTreeMap<BranchKey, Option<u64>>,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-    EmitFuncData {
-        fn_found: u32,
-        fn_hit: u32,
-        fn_data: btree_map::IntoIter<String, u64>,
-        br_data: BTreeMap<BranchKey, Option<u64>>,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-    EmitFuncsFound {
-        fn_found: u32,
-        fn_hit: u32,
-        br_data: BTreeMap<BranchKey, Option<u64>>,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-    EmitFuncsHit {
-        fn_hit: u32,
-        br_data: BTreeMap<BranchKey, Option<u64>>,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-
-    EmitBranchData {
-        br_found: u32,
-        br_hit: u32,
-        br_data: btree_map::IntoIter<BranchKey, Option<u64>>,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-    EmitBranchesFound {
-        br_found: u32,
-        br_hit: u32,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-    EmitBranchesHit {
-        br_hit: u32,
-        ln_data: BTreeMap<u32, LineData>,
-    },
-
-    EmitLineData {
-        ln_found: u32,
-        ln_hit: u32,
-        ln_data: btree_map::IntoIter<u32, LineData>,
-    },
-    EmitLinesFound {
-        ln_found: u32,
-        ln_hit: u32,
-    },
-    EmitLinesHit {
-        ln_hit: u32,
-    },
-
-    End,
+pub struct FileIntoIter {
+    inner: Box<Iterator<Item = Record>>,
 }
 
 impl Iterator for FileIntoIter {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use self::FileIntoIterState::*;
-        loop {
-            return match mem::replace(&mut self.state, End) {
-                EmitFuncName {
-                    mut fn_found,
-                    mut fn_lines,
-                    fn_data,
-                    br_data,
-                    ln_data,
-                } => match fn_lines.next() {
-                    Some((name, start_line)) => {
-                        fn_found += 1;
-                        self.state = EmitFuncName {
-                            fn_found,
-                            fn_lines,
-                            fn_data,
-                            br_data,
-                            ln_data,
-                        };
-                        Some(Record::FunctionName { name, start_line })
-                    }
-                    None => {
-                        self.state = EmitFuncData {
-                            fn_found,
-                            fn_hit: 0,
-                            fn_data: fn_data.into_iter(),
-                            br_data,
-                            ln_data,
-                        };
-                        continue;
-                    }
-                },
-
-                EmitFuncData {
-                    fn_found,
-                    mut fn_hit,
-                    mut fn_data,
-                    br_data,
-                    ln_data,
-                } => match fn_data.next() {
-                    Some((name, count)) => {
-                        if count > 0 {
-                            fn_hit += 1;
-                        }
-                        self.state = EmitFuncData {
-                            fn_found,
-                            fn_hit,
-                            fn_data,
-                            br_data,
-                            ln_data,
-                        };
-                        Some(Record::FunctionData { name, count })
-                    }
-                    None => {
-                        self.state = EmitFuncsFound {
-                            fn_found,
-                            fn_hit,
-                            br_data,
-                            ln_data,
-                        };
-                        continue;
-                    }
-                },
-
-                EmitFuncsFound {
-                    fn_found,
-                    fn_hit,
-                    br_data,
-                    ln_data,
-                } => {
-                    if fn_found == 0 {
-                        debug_assert_eq!(fn_hit, 0);
-                        self.state = EmitBranchData {
-                            br_found: 0,
-                            br_hit: 0,
-                            br_data: br_data.into_iter(),
-                            ln_data,
-                        };
-                        continue;
-                    }
-
-                    self.state = EmitFuncsHit {
-                        fn_hit,
-                        br_data,
-                        ln_data,
-                    };
-                    Some(Record::FunctionsFound { found: fn_found })
-                }
-
-                EmitFuncsHit {
-                    fn_hit,
-                    br_data,
-                    ln_data,
-                } => {
-                    self.state = EmitBranchData {
-                        br_found: 0,
-                        br_hit: 0,
-                        br_data: br_data.into_iter(),
-                        ln_data,
-                    };
-                    Some(Record::FunctionsHit { hit: fn_hit })
-                }
-
-                EmitBranchData {
-                    mut br_found,
-                    mut br_hit,
-                    mut br_data,
-                    ln_data,
-                } => match br_data.next() {
-                    Some((key, taken)) => {
-                        br_found += 1;
-                        if let Some(x) = taken {
-                            if x > 0 {
-                                br_hit += 1;
-                            }
-                        }
-                        self.state = EmitBranchData {
-                            br_found,
-                            br_hit,
-                            br_data,
-                            ln_data,
-                        };
-                        Some(Record::BranchData {
-                            line: key.line,
-                            block: key.block,
-                            branch: key.branch,
-                            taken,
-                        })
-                    }
-                    None => {
-                        self.state = EmitBranchesFound {
-                            br_found,
-                            br_hit,
-                            ln_data,
-                        };
-                        continue;
-                    }
-                },
-                EmitBranchesFound {
-                    br_found,
-                    br_hit,
-                    ln_data,
-                } => {
-                    if br_found == 0 {
-                        debug_assert_eq!(br_hit, 0);
-                        self.state = EmitLineData {
-                            ln_found: 0,
-                            ln_hit: 0,
-                            ln_data: ln_data.into_iter(),
-                        };
-                        continue;
-                    }
-
-                    self.state = EmitBranchesHit { br_hit, ln_data };
-                    Some(Record::BranchesFound { found: br_found })
-                }
-                EmitBranchesHit { br_hit, ln_data } => {
-                    self.state = EmitLineData {
-                        ln_found: 0,
-                        ln_hit: 0,
-                        ln_data: ln_data.into_iter(),
-                    };
-                    Some(Record::BranchesHit { hit: br_hit })
-                }
-
-                EmitLineData {
-                    mut ln_found,
-                    mut ln_hit,
-                    mut ln_data,
-                } => match ln_data.next() {
-                    Some((line, data)) => {
-                        ln_found += 1;
-                        if data.count > 0 {
-                            ln_hit += 1;
-                        }
-                        self.state = EmitLineData {
-                            ln_found,
-                            ln_hit,
-                            ln_data,
-                        };
-                        Some(Record::LineData {
-                            line,
-                            count: data.count,
-                            checksum: data.checksum,
-                        })
-                    }
-                    None => {
-                        self.state = EmitLinesFound { ln_found, ln_hit };
-                        continue;
-                    }
-                },
-                EmitLinesFound { ln_found, ln_hit } => {
-                    self.state = EmitLinesHit { ln_hit };
-                    Some(Record::LinesFound { found: ln_found })
-                }
-                EmitLinesHit { ln_hit } => {
-                    self.state = End;
-                    Some(Record::LinesHit { hit: ln_hit })
-                }
-
-                End => None,
-            };
-        }
+        self.inner.next()
     }
 }
