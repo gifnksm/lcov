@@ -367,7 +367,7 @@ impl IntoIterator for File {
     }
 }
 
-pub struct FileIntoIter {
+struct FileIntoIter {
     inner: Box<Iterator<Item = Record>>,
 }
 
