@@ -4,21 +4,22 @@ use std::iter;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
-pub enum Error<ReadError> {
+pub enum MergeError<ReadError> {
     #[fail(display = "failed to read record: {}", _0)] Read(#[cause] ReadError),
     #[fail(display = "unexpected record `{}`", _0)] UnexpectedRecord(RecordKind),
     #[fail(display = "unexpected end of stream")] UnexpectedEof,
     #[fail(display = "unmatched function line")] UnmatchedFunctionLine,
+    #[fail(display = "unmatched function name")] UnmatchedFunctionName,
     #[fail(display = "unmatches checksum")] UnmatchedChecksum,
 }
 
 macro_rules! eat {
     ($parser:expr, $p:pat) => { eat!($parser, $p => {}) };
     ($parser:expr, $p:pat => $body:expr) => {
-        match $parser.pop().map_err(Error::Read)? {
+        match $parser.pop().map_err(MergeError::Read)? {
             Some($p) => $body,
-            Some(rec) => Err(Error::UnexpectedRecord(rec.kind()))?,
-            None => Err(Error::UnexpectedEof)?,
+            Some(rec) => Err(MergeError::UnexpectedRecord(rec.kind()))?,
+            None => Err(MergeError::UnexpectedEof)?,
         }
     }
 }
@@ -26,7 +27,7 @@ macro_rules! eat {
 macro_rules! eat_if_matches {
     ($parser:expr, $p:pat) => { eat_if_matches!($parser, $p => {}) };
     ($parser:expr, $p:pat => $body:expr) => {
-        match $parser.pop().map_err(Error::Read)? {
+        match $parser.pop().map_err(MergeError::Read)? {
             Some($p)=>Some($body),
             Some(item) => {
                 $parser.push(item);
@@ -84,32 +85,32 @@ where
 }
 
 
-#[derive(Debug, Clone, Default)]
-pub struct Merger {
-    files: BTreeMap<FileKey, File>,
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+pub struct Report {
+    sections: BTreeMap<SectionKey, Section>,
 }
 
-impl Merger {
+impl Report {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn merge<I, E>(&mut self, it: I) -> Result<(), Error<E>>
+    pub fn merge<I, E>(&mut self, it: I) -> Result<(), MergeError<E>>
     where
         I: IntoIterator<Item = Result<Record, E>>,
     {
         let mut parser = Parser::new(it.into_iter());
 
-        while let Some(_) = parser.peek().map_err(Error::Read)? {
+        while let Some(_) = parser.peek().map_err(MergeError::Read)? {
             let test_name =
                 eat_if_matches!(parser, Record::TestName { name } => name).unwrap_or("".into());
             let source_file = eat!(parser, Record::SourceFile { path } => path);
-            let key = FileKey {
+            let key = SectionKey {
                 test_name,
                 source_file,
             };
-            let file = self.files.entry(key).or_insert_with(Default::default);
-            file.merge(&mut parser)?;
+            let section = self.sections.entry(key).or_insert_with(Default::default);
+            section.merge(&mut parser)?;
             eat!(parser, Record::EndOfRecord);
         }
 
@@ -118,21 +119,20 @@ impl Merger {
 }
 
 #[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct FileKey {
+struct SectionKey {
     test_name: String,
     source_file: PathBuf,
 }
 
-#[derive(Debug, Clone, Default)]
-struct File {
-    fn_lines: BTreeMap<String, u32>,
-    fn_data: BTreeMap<String, u64>,
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+struct Section {
+    fn_data: BTreeMap<String, FuncData>,
     br_data: BTreeMap<BranchKey, Option<u64>>,
     ln_data: BTreeMap<u32, LineData>,
 }
 
-impl File {
-    fn merge<I, E>(&mut self, parser: &mut Parser<I, Record>) -> Result<(), Error<E>>
+impl Section {
+    fn merge<I, E>(&mut self, parser: &mut Parser<I, Record>) -> Result<(), MergeError<E>>
     where
         I: Iterator<Item = Result<Record, E>>,
     {
@@ -140,9 +140,12 @@ impl File {
         while let Some((name, start_line)) =
             eat_if_matches!(parser, Record::FunctionName { name, start_line } => (name, start_line))
         {
-            let line = *self.fn_lines.entry(name).or_insert(start_line);
-            if line != start_line {
-                Err(Error::UnmatchedFunctionLine)?;
+            let data = self.fn_data.entry(name).or_insert(FuncData {
+                start_line,
+                count: 0,
+            });
+            if data.start_line != start_line {
+                Err(MergeError::UnmatchedFunctionLine)?;
             }
         }
 
@@ -150,7 +153,10 @@ impl File {
         while let Some((name, count)) =
             eat_if_matches!(parser, Record::FunctionData { name, count } => { (name, count) })
         {
-            *self.fn_data.entry(name).or_insert(0) += count;
+            match self.fn_data.get_mut(&name) {
+                Some(data) => data.count += count,
+                None => Err(MergeError::UnmatchedFunctionName)?,
+            }
         }
 
         eat_if_matches!(parser, Record::FunctionsFound { .. });
@@ -182,7 +188,7 @@ impl File {
             if let Some(checksum) = checksum {
                 if let Some(org_checksum) = org.checksum.as_ref() {
                     if checksum != *org_checksum {
-                        Err(Error::UnmatchedChecksum)?;
+                        Err(MergeError::UnmatchedChecksum)?;
                     }
                 }
                 org.checksum = Some(checksum);
@@ -196,6 +202,12 @@ impl File {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct FuncData {
+    start_line: u32,
+    count: u64,
+}
+
 #[derive(Debug, Clone, Default, Hash, Ord, PartialOrd, Eq, PartialEq)]
 struct BranchKey {
     line: u32,
@@ -203,25 +215,25 @@ struct BranchKey {
     branch: u32,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 struct LineData {
     count: u64,
     checksum: Option<String>,
 }
 
-impl IntoIterator for Merger {
+impl IntoIterator for Report {
     type Item = Record;
     type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            inner: Box::new(self.files.into_iter().flat_map(|(key, file)| {
+            inner: Box::new(self.sections.into_iter().flat_map(|(key, section)| {
                 iter::once(Record::TestName {
                     name: key.test_name,
                 }).chain(iter::once(Record::SourceFile {
                     path: key.source_file,
                 }))
-                    .chain(file.into_iter())
+                    .chain(section.into_iter())
                     .chain(iter::once(Record::EndOfRecord))
             })),
         }
@@ -240,28 +252,36 @@ impl Iterator for IntoIter {
     }
 }
 
-impl IntoIterator for File {
+impl IntoIterator for Section {
     type Item = Record;
-    type IntoIter = FileIntoIter;
+    type IntoIter = SectionIntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
+        let mut fn_data = self.fn_data.into_iter().collect::<Vec<_>>();
+        fn_data.sort_by_key(|&(_, ref data)| data.start_line);
+
         enum Func {
-            Line((String, u32)),
-            Data((String, u64)),
+            Line(String, u32),
+            Data(String, u64),
             Found(bool, u32),
             Hit(bool, u32),
         }
-        let fn_line = self.fn_lines.into_iter().map(Func::Line);
-        let fn_data = self.fn_data.into_iter().map(Func::Data);
+        let fn_line = fn_data
+            .clone()
+            .into_iter()
+            .map(|(name, data)| Func::Line(name, data.start_line));
+        let fn_count = fn_data
+            .into_iter()
+            .map(|(name, data)| Func::Data(name, data.count));
         let fn_iter = fn_line
-            .chain(fn_data)
+            .chain(fn_count)
             .chain(iter::once(Func::Found(false, 0)))
             .chain(iter::once(Func::Hit(false, 0)))
             .scan((0, 0), |st, mut rec| {
                 let do_emit = st.0 > 0;
                 match &mut rec {
                     &mut Func::Line(..) => st.0 += 1,
-                    &mut Func::Data((_, ref mut count)) if *count > 0 => st.1 += 1,
+                    &mut Func::Data(_, ref mut count) if *count > 0 => st.1 += 1,
                     &mut Func::Data(..) => {}
                     &mut Func::Found(ref mut emit, ref mut count) => {
                         *emit = do_emit;
@@ -275,8 +295,8 @@ impl IntoIterator for File {
                 Some(rec)
             })
             .filter_map(|rec| match rec {
-                Func::Line((name, start_line)) => Some(Record::FunctionName { name, start_line }),
-                Func::Data((name, count)) => Some(Record::FunctionData { name, count }),
+                Func::Line(name, start_line) => Some(Record::FunctionName { name, start_line }),
+                Func::Data(name, count) => Some(Record::FunctionData { name, count }),
                 Func::Found(true, found) => Some(Record::FunctionsFound { found }),
                 Func::Found(false, _) => None,
                 Func::Hit(true, hit) => Some(Record::FunctionsHit { hit }),
@@ -361,17 +381,17 @@ impl IntoIterator for File {
             });
 
         let iter = fn_iter.chain(branch_iter).chain(line_iter);
-        FileIntoIter {
+        SectionIntoIter {
             inner: Box::new(iter),
         }
     }
 }
 
-struct FileIntoIter {
+struct SectionIntoIter {
     inner: Box<Iterator<Item = Record>>,
 }
 
-impl Iterator for FileIntoIter {
+impl Iterator for SectionIntoIter {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
