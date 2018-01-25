@@ -1,5 +1,6 @@
 use super::{Record, RecordKind};
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use std::iter;
 use std::path::PathBuf;
 
@@ -109,8 +110,18 @@ impl Report {
                 test_name,
                 source_file,
             };
-            let section = self.sections.entry(key).or_insert_with(Default::default);
-            section.merge(&mut parser)?;
+            match self.sections.entry(key) {
+                Entry::Vacant(e) => {
+                    let mut section = Section::default();
+                    section.merge(&mut parser)?;
+                    // If the new section contains no data, ignore it.
+                    // LCOV merge (`lcov -c -a XXX`) behaves the same way.
+                    if !section.is_empty() {
+                        e.insert(section);
+                    }
+                }
+                Entry::Occupied(mut e) => e.get_mut().merge(&mut parser)?,
+            }
             eat!(parser, Record::EndOfRecord);
         }
 
@@ -132,6 +143,10 @@ struct Section {
 }
 
 impl Section {
+    fn is_empty(&self) -> bool {
+        self.fn_data.is_empty() && self.br_data.is_empty() && self.ln_data.is_empty()
+    }
+
     fn merge<I, E>(&mut self, parser: &mut Parser<I, Record>) -> Result<(), MergeError<E>>
     where
         I: Iterator<Item = Result<Record, E>>,
@@ -226,16 +241,17 @@ impl IntoIterator for Report {
     type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
+        let iter = self.sections.into_iter().flat_map(|(key, section)| {
+            iter::once(Record::TestName {
+                name: key.test_name,
+            }).chain(iter::once(Record::SourceFile {
+                path: key.source_file,
+            }))
+                .chain(section.into_iter())
+                .chain(iter::once(Record::EndOfRecord))
+        });
         IntoIter {
-            inner: Box::new(self.sections.into_iter().flat_map(|(key, section)| {
-                iter::once(Record::TestName {
-                    name: key.test_name,
-                }).chain(iter::once(Record::SourceFile {
-                    path: key.source_file,
-                }))
-                    .chain(section.into_iter())
-                    .chain(iter::once(Record::EndOfRecord))
-            })),
+            inner: Box::new(iter),
         }
     }
 }
