@@ -1,14 +1,14 @@
 use self::parser::Parser;
 use self::section::Section;
 use super::{Record, RecordKind};
+use std::{iter, mem};
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
-use std::iter;
 use std::path::PathBuf;
 
 #[macro_use]
 mod parser;
-mod section;
+pub(crate) mod section;
 
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
 pub enum MergeError<ReadError> {
@@ -26,9 +26,9 @@ pub struct Report {
 }
 
 #[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
-struct SectionKey {
-    test_name: String,
-    source_file: PathBuf,
+pub(crate) struct SectionKey {
+    pub(crate) test_name: String,
+    pub(crate) source_file: PathBuf,
 }
 
 impl Report {
@@ -66,6 +66,14 @@ impl Report {
         }
 
         Ok(())
+    }
+
+    pub(crate) fn filter_map<F>(&mut self, f: F)
+    where
+        F: FnMut((SectionKey, Section)) -> Option<(SectionKey, Section)>,
+    {
+        let sections = mem::replace(&mut self.sections, BTreeMap::new());
+        self.sections.extend(sections.into_iter().filter_map(f));
     }
 }
 

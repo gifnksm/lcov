@@ -1,10 +1,10 @@
 use super::{MergeError, Parser, Record};
+use std::{iter, mem};
 use std::collections::BTreeMap;
-use std::iter;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub(crate) struct BranchList {
-    list: BTreeMap<BranchKey, Option<u64>>,
+    list: BTreeMap<BranchKey, BranchData>,
 }
 
 impl BranchList {
@@ -21,12 +21,12 @@ impl BranchList {
     {
         while let Some((key, taken)) = eat_if_matches!(parser,
             Record::BranchData { line, block, branch, taken } => {
-                (BranchKey { line, block, branch }, taken)
+                (BranchKey { line, block, branch }, BranchData {taken})
             }
         ) {
-            let org = self.list.entry(key).or_insert(None);
-            if let Some(taken) = taken {
-                *org = Some(org.unwrap_or(0) + taken);
+            let org = self.list.entry(key).or_insert_with(BranchData::default);
+            if let BranchData { taken: Some(taken) } = taken {
+                org.taken = Some(org.taken.unwrap_or(0) + taken);
             }
         }
 
@@ -35,13 +35,26 @@ impl BranchList {
 
         Ok(())
     }
+
+    pub(crate) fn filter_map<F>(&mut self, f: F)
+    where
+        F: FnMut((BranchKey, BranchData)) -> Option<(BranchKey, BranchData)>,
+    {
+        let list = mem::replace(&mut self.list, BTreeMap::new());
+        self.list.extend(list.into_iter().filter_map(f));
+    }
 }
 
 #[derive(Debug, Clone, Default, Hash, Ord, PartialOrd, Eq, PartialEq)]
-struct BranchKey {
-    line: u32,
-    block: u32,
-    branch: u32,
+pub(crate) struct BranchKey {
+    pub(crate) line: u32,
+    pub(crate) block: u32,
+    pub(crate) branch: u32,
+}
+
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+pub(crate) struct BranchData {
+    pub(crate) taken: Option<u64>,
 }
 
 impl IntoIterator for BranchList {
@@ -56,7 +69,7 @@ impl IntoIterator for BranchList {
         let found = self.list.len() as u32;
 
         enum Branch {
-            Data((BranchKey, Option<u64>)),
+            Data((BranchKey, BranchData)),
             Found,
             Hit(u32),
         }
@@ -67,7 +80,7 @@ impl IntoIterator for BranchList {
             .chain(iter::once(Branch::Hit(0)))
             .scan(0, |hit_count, mut rec| {
                 match &mut rec {
-                    &mut Branch::Data((_, taken)) => if taken.unwrap_or(0) > 0 {
+                    &mut Branch::Data((_, ref data)) => if data.taken.unwrap_or(0) > 0 {
                         *hit_count += 1
                     },
                     &mut Branch::Found => {}
@@ -76,11 +89,11 @@ impl IntoIterator for BranchList {
                 Some(rec)
             })
             .map(move |rec| match rec {
-                Branch::Data((key, taken)) => Record::BranchData {
+                Branch::Data((key, data)) => Record::BranchData {
                     line: key.line,
                     block: key.block,
                     branch: key.branch,
-                    taken: taken,
+                    taken: data.taken,
                 },
                 Branch::Found => Record::BranchesFound { found },
                 Branch::Hit(hit) => Record::BranchesHit { hit },

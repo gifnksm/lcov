@@ -32,6 +32,16 @@ impl Section {
 
         Ok(())
     }
+
+    pub(crate) fn func_list(&mut self) -> &mut FuncList {
+        &mut self.func_list
+    }
+    pub(crate) fn branch_list(&mut self) -> &mut BranchList {
+        &mut self.branch_list
+    }
+    pub(crate) fn line_list(&mut self) -> &mut LineList {
+        &mut self.line_list
+    }
 }
 
 impl IntoIterator for Section {

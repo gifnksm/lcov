@@ -1,10 +1,10 @@
 use super::{MergeError, Parser, Record};
+use std::{iter, mem};
 use std::collections::BTreeMap;
-use std::iter;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub(crate) struct LineList {
-    list: BTreeMap<u32, LineData>,
+    list: BTreeMap<LineKey, LineData>,
 }
 
 impl LineList {
@@ -24,7 +24,9 @@ impl LineList {
                 (line, count, checksum)
             }
         ) {
-            let org = self.list.entry(line).or_insert(LineData::default());
+            let org = self.list
+                .entry(LineKey { line })
+                .or_insert(LineData::default());
             org.count += count;
             if let Some(checksum) = checksum {
                 if let Some(org_checksum) = org.checksum.as_ref() {
@@ -41,12 +43,25 @@ impl LineList {
 
         Ok(())
     }
+
+    pub(crate) fn filter_map<F>(&mut self, f: F)
+    where
+        F: FnMut((LineKey, LineData)) -> Option<(LineKey, LineData)>,
+    {
+        let list = mem::replace(&mut self.list, BTreeMap::new());
+        self.list.extend(list.into_iter().filter_map(f));
+    }
+}
+
+#[derive(Debug, Clone, Default, Hash, Ord, PartialOrd, Eq, PartialEq)]
+pub(crate) struct LineKey {
+    pub(crate) line: u32,
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
-struct LineData {
-    count: u64,
-    checksum: Option<String>,
+pub(crate) struct LineData {
+    pub(crate) count: u64,
+    pub(crate) checksum: Option<String>,
 }
 
 impl IntoIterator for LineList {
@@ -60,7 +75,7 @@ impl IntoIterator for LineList {
 
         let found = self.list.len() as u32;
         enum Line {
-            Data((u32, LineData)),
+            Data((LineKey, LineData)),
             Found,
             Hit(u32),
         }
@@ -80,8 +95,8 @@ impl IntoIterator for LineList {
                 Some(rec)
             })
             .map(move |rec| match rec {
-                Line::Data((line, data)) => Record::LineData {
-                    line,
+                Line::Data((key, data)) => Record::LineData {
+                    line: key.line,
                     count: data.count,
                     checksum: data.checksum,
                 },
