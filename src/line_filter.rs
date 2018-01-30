@@ -43,7 +43,6 @@ impl Filter {
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 struct File {
     start2end: BTreeMap<u32, u32>,
-    end2start: BTreeMap<u32, u32>,
 }
 
 impl File {
@@ -53,66 +52,37 @@ impl File {
         }
         let hend = self.start2end.entry(start).or_insert(end);
         *hend = u32::max(*hend, end);
-        let hstart = self.end2start.entry(end).or_insert(start);
-        *hstart = u32::min(*hstart, start);
     }
 
     fn normalize(&mut self) {
-        fn exec<F, I>(map: &mut BTreeMap<u32, u32>, conv_from: F, mut conv_into: I)
-        where
-            F: FnMut((u32, u32)) -> Hunk,
-            I: FnMut(Hunk) -> (u32, u32),
-        {
-            let mut iter = mem::replace(map, BTreeMap::new())
-                .into_iter()
-                .map(conv_from);
-            let mut cur_hunk = match iter.next() {
-                Some(cur_hunk) => cur_hunk,
-                None => return,
-            };
-            for hunk in iter {
-                cur_hunk = cur_hunk.join(hunk).unwrap_or_else(|| {
-                    let (k, v) = conv_into(cur_hunk);
-                    let _ = map.insert(k, v);
-                    hunk
-                });
-            }
-            let (k, v) = conv_into(cur_hunk);
-            let _ = map.insert(k, v);
+        let mut iter = mem::replace(&mut self.start2end, BTreeMap::new())
+            .into_iter()
+            .map(|(start, end)| Hunk::new(start, end));
+        let mut cur_hunk = match iter.next() {
+            Some(cur_hunk) => cur_hunk,
+            None => return,
+        };
+        for hunk in iter {
+            cur_hunk = cur_hunk.join(hunk).unwrap_or_else(|| {
+                let _ = self.start2end.insert(cur_hunk.start, cur_hunk.end);
+                hunk
+            });
         }
+        let _ = self.start2end.insert(cur_hunk.start, cur_hunk.end);
 
-        exec(
-            &mut self.start2end,
-            |(start, end)| Hunk::new(start, end),
-            |hunk| (hunk.start, hunk.end),
-        );
-        exec(
-            &mut self.end2start,
-            |(end, start)| Hunk::new(start, end),
-            |hunk| (hunk.end, hunk.start),
-        )
+        debug_assert!(self.start2end.iter().all(|(s, e)| s <= e));
     }
 
-
     fn contains_range(&self, (start, end): (u32, u32)) -> bool {
-        if let Some((&hend, &hstart)) = self.end2start.range(start..).next() {
-            debug_assert!(hend >= start);
-            if hstart <= end {
-                return true;
-            }
-        }
         self.start2end
-            .range((Bound::Included(start), Bound::Included(end)))
-            .next()
-            .is_some()
+            .range((Bound::Unbounded, Bound::Included(end)))
+            .next_back()
+            .map(|(&_hstart, &hend)| hend >= start)
+            .unwrap_or(false)
     }
 
     fn contains_line(&self, line: u32) -> bool {
-        if let Some((&hend, &hstart)) = self.end2start.range(line..).next() {
-            debug_assert!(hend >= line);
-            return hstart <= line;
-        }
-        false
+        self.contains_range((line, line))
     }
 
     fn execute(&self, section: &mut Section) {
@@ -166,7 +136,7 @@ impl Hunk {
 
 #[cfg(test)]
 mod tests {
-    use super::Hunk;
+    use super::{File, Hunk};
 
     #[test]
     fn join() {
@@ -184,6 +154,59 @@ mod tests {
         check(Some((0, 3)), (0, 1), (2, 3));
         check(Some((0, 3)), (0, 2), (1, 3));
         check(Some((0, 3)), (0, 3), (1, 2));
+        check(Some((0, 4)), (0, 0), (0, 4));
         check(Some((0, max)), (0, max), (100, 400));
+    }
+
+    #[test]
+    fn add_range() {
+        fn check(file: &File, start2end: &[(u32, u32)]) {
+            assert_eq!(file.start2end, start2end.iter().cloned().collect());
+        }
+
+        let mut file = File::default();
+        file.add_range((10, 10));
+        check(&file, &[(10, 10)]);
+        file.add_range((15, 20));
+        check(&file, &[(10, 10), (15, 20)]);
+        file.add_range((15, 40));
+        check(&file, &[(10, 10), (15, 40)]);
+        file.add_range((10, 40));
+        check(&file, &[(10, 40), (15, 40)]);
+        file.normalize();
+        check(&file, &[(10, 40)]);
+
+        file.add_range((50, 100));
+        file.normalize();
+        check(&file, &[(10, 40), (50, 100)]);
+    }
+
+    #[test]
+    fn contains() {
+        fn gen_file(i: u32, n: u32) -> (File, Vec<bool>) {
+            let map = (0..n).map(|j| (i & (1 << j)) != 0).collect::<Vec<_>>();
+            let mut file = File::default();
+            for (i, &f) in map.iter().enumerate() {
+                if f {
+                    file.add_range((i as u32, i as u32));
+                }
+            }
+            file.normalize();
+            (file, map)
+        }
+
+        let n = 8;
+        for i in 0..(2u32.pow(n)) {
+            let (file, map) = gen_file(i, n);
+            for start in 0..n {
+                for end in start..n {
+                    let res = file.contains_range((start, end));
+                    let cmp = map[(start as usize)..((end + 1) as usize)]
+                        .iter()
+                        .any(|&f| f);
+                    assert_eq!(res, cmp);
+                }
+            }
+        }
     }
 }
