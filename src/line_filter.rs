@@ -30,7 +30,7 @@ impl Filter {
         report.filter_map(|(key, mut sect)| {
             self.files.get(&key.source_file).and_then(|file| {
                 file.execute(&mut sect);
-                if sect.is_empty() {
+                if !sect.is_empty() {
                     Some((key, sect))
                 } else {
                     None
