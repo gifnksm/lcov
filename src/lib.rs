@@ -17,7 +17,7 @@
 //! Each line of the LCOV tracefile is composed of a string representing a kind of the record,
 //! a colon, a comma-separated field list:
 //!
-//! ```text, no_run
+//! ```text
 //! <KIND>:<field#0>,<field#1>,...<field#N>
 //! ```
 //!
@@ -34,7 +34,6 @@
 //! # extern crate failure;
 //! # extern crate lcov;
 //! # use failure::Error;
-//! #
 //! # fn try_main() -> Result<(), Error> {
 //! use std::fs::File;
 //! use std::io::BufReader;
@@ -55,10 +54,8 @@
 //! for record in records {
 //!     println!("{}", record);
 //! }
-//! #
 //! # Ok(())
 //! # }
-//! #
 //! # fn main() {
 //! #   try_main().expect("failed to run test");
 //! # }
@@ -70,7 +67,6 @@
 //! # extern crate failure;
 //! # extern crate lcov;
 //! # use failure::Error;
-//! #
 //! # fn try_main() -> Result<(), Error> {
 //! use lcov::{Reader, Record};
 //!
@@ -95,10 +91,8 @@
 //! // Creates an `String` in tracefile format. In this example, it is the same as `input`.
 //! let output = records.into_iter().map(|rec| format!("{}\n", rec)).collect::<String>();
 //! assert_eq!(input, output);
-//! #
 //! # Ok(())
 //! # }
-//! #
 //! # fn main() {
 //! #   try_main().expect("failed to run test");
 //! # }
@@ -110,7 +104,6 @@
 //! # extern crate failure;
 //! # extern crate lcov;
 //! # use failure::Error;
-//! #
 //! # fn try_main() -> Result<(), Error> {
 //! use std::fs::File;
 //! use std::io::BufReader;
@@ -131,10 +124,8 @@
 //! for record in report {
 //!     println!("{}", record);
 //! }
-//! #
 //! # Ok(())
 //! # }
-//! #
 //! # fn main() {
 //! #   try_main().expect("failed to run test");
 //! # }
