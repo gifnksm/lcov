@@ -1,7 +1,7 @@
 use super::report::Report;
 use super::report::section::Section;
+use std::{mem, ops};
 use std::collections::{BTreeMap, Bound, HashMap};
-use std::mem;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
@@ -14,10 +14,11 @@ impl Filter {
         Self::default()
     }
 
-    pub fn insert<P, I>(&mut self, path: P, it: I)
+    pub fn insert<P, I, R>(&mut self, path: P, it: I)
     where
         P: Into<PathBuf>,
-        I: IntoIterator<Item = (u32, u32)>,
+        I: IntoIterator<Item = R>,
+        R: Into<Range>,
     {
         let file = self.files.entry(path.into()).or_insert_with(File::default);
         for range in it {
@@ -46,48 +47,53 @@ struct File {
 }
 
 impl File {
-    fn add_range(&mut self, (start, end): (u32, u32)) {
-        if end < start {
+    fn add_range<R>(&mut self, range: R)
+    where
+        R: Into<Range>,
+    {
+        let range = range.into();
+        if !range.is_valid() {
             return;
         }
-        let hend = self.start2end.entry(start).or_insert(end);
-        *hend = u32::max(*hend, end);
+        let rend = self.start2end.entry(range.start).or_insert(range.end);
+        *rend = u32::max(*rend, range.end);
     }
 
     fn normalize(&mut self) {
         let mut iter = mem::replace(&mut self.start2end, BTreeMap::new())
             .into_iter()
-            .map(|(start, end)| Hunk::new(start, end));
-        let mut cur_hunk = match iter.next() {
-            Some(cur_hunk) => cur_hunk,
+            .map(|(start, end)| Range::new(start, end));
+        let mut cur_range = match iter.next() {
+            Some(cur_range) => cur_range,
             None => return,
         };
-        for hunk in iter {
-            cur_hunk = cur_hunk.join(hunk).unwrap_or_else(|| {
-                let _ = self.start2end.insert(cur_hunk.start, cur_hunk.end);
-                hunk
+        for range in iter {
+            cur_range = cur_range.join(range).unwrap_or_else(|| {
+                let _ = self.start2end.insert(cur_range.start, cur_range.end);
+                range
             });
         }
-        let _ = self.start2end.insert(cur_hunk.start, cur_hunk.end);
+        let _ = self.start2end.insert(cur_range.start, cur_range.end);
 
         debug_assert!(self.start2end.iter().all(|(s, e)| s <= e));
     }
 
-    fn contains_range(&self, (start, end): (u32, u32)) -> bool {
+    fn contains_range<R>(&self, range: R) -> bool where R: Into<Range> {
+        let range = range.into();
         self.start2end
-            .range((Bound::Unbounded, Bound::Included(end)))
+            .range((Bound::Unbounded, Bound::Included(range.end)))
             .next_back()
-            .map(|(&_hstart, &hend)| hend >= start)
+            .map(|(&_start, &end)| end >= range.start)
             .unwrap_or(false)
     }
 
     fn contains_line(&self, line: u32) -> bool {
-        self.contains_range((line, line))
+        self.contains_range(Range::new(line, line))
     }
 
     fn apply(&self, section: &mut Section) {
         section.func_list().filter_map(|(key, data)| {
-            if self.contains_range((data.start_line, data.end_line)) {
+            if self.contains_range(Range::new(data.start_line, data.end_line)) {
                 Some((key, data))
             } else {
                 None
@@ -111,18 +117,52 @@ impl File {
 }
 
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
-struct Hunk {
+pub struct Range {
     start: u32,
     end: u32,
 }
 
-impl Hunk {
+impl From<ops::Range<u32>> for Range {
+    fn from(range: ops::Range<u32>) -> Self {
+        Range::new(range.start, u32::saturating_sub(range.end, 1))
+    }
+}
+
+impl From<ops::RangeFrom<u32>> for Range {
+    fn from(range: ops::RangeFrom<u32>) -> Self {
+        Range::new(range.start, u32::max_value())
+    }
+}
+
+impl From<ops::RangeTo<u32>> for Range {
+    fn from(range: ops::RangeTo<u32>) -> Self {
+        Range::new(0, u32::saturating_sub(range.end, 1))
+    }
+}
+
+impl From<ops::RangeFull> for Range {
+    fn from(_: ops::RangeFull) -> Self {
+        Range::new(0, u32::max_value())
+    }
+}
+
+impl Range {
     fn new(start: u32, end: u32) -> Self {
-        assert!(start <= end);
-        Hunk { start, end }
+        Range { start, end }
+    }
+
+    fn is_valid(&self) -> bool {
+        self.start <= self.end
     }
 
     fn join(self, other: Self) -> Option<Self> {
+        if !self.is_valid() {
+            return Some(other);
+        }
+        if !other.is_valid() {
+            return Some(self);
+        }
+
         if u32::saturating_add(other.end, 1) < self.start
             || u32::saturating_add(self.end, 1) < other.start
         {
@@ -136,18 +176,18 @@ impl Hunk {
 
 #[cfg(test)]
 mod tests {
-    use super::{File, Hunk};
+    use super::{File, Range};
 
     #[test]
     fn join() {
-        fn check(expect: Option<(u32, u32)>, hunk1: (u32, u32), hunk2: (u32, u32)) {
-            let hunk1 = Hunk::new(hunk1.0, hunk1.1);
-            let hunk2 = Hunk::new(hunk2.0, hunk2.1);
-            let expect = expect.map(|expect| Hunk::new(expect.0, expect.1));
-            assert_eq!(expect, hunk1.join(hunk2));
-            assert_eq!(expect, hunk2.join(hunk1));
-            assert_eq!(Some(hunk1), hunk1.join(hunk1));
-            assert_eq!(Some(hunk2), hunk2.join(hunk2));
+        fn check(expect: Option<(u32, u32)>, range1: (u32, u32), range2: (u32, u32)) {
+            let range1 = Range::new(range1.0, range1.1);
+            let range2 = Range::new(range2.0, range2.1);
+            let expect = expect.map(|expect| Range::new(expect.0, expect.1));
+            assert_eq!(expect, range1.join(range2));
+            assert_eq!(expect, range2.join(range1));
+            assert_eq!(Some(range1), range1.join(range1));
+            assert_eq!(Some(range2), range2.join(range2));
         }
         let max = u32::max_value();
         check(Some((0, 3)), (0, 1), (1, 3));
@@ -165,18 +205,18 @@ mod tests {
         }
 
         let mut file = File::default();
-        file.add_range((10, 10));
+        file.add_range(Range::new(10, 10));
         check(&file, &[(10, 10)]);
-        file.add_range((15, 20));
+        file.add_range(Range::new(15, 20));
         check(&file, &[(10, 10), (15, 20)]);
-        file.add_range((15, 40));
+        file.add_range(Range::new(15, 40));
         check(&file, &[(10, 10), (15, 40)]);
-        file.add_range((10, 40));
+        file.add_range(Range::new(10, 40));
         check(&file, &[(10, 40), (15, 40)]);
         file.normalize();
         check(&file, &[(10, 40)]);
 
-        file.add_range((50, 100));
+        file.add_range(Range::new(50, 100));
         file.normalize();
         check(&file, &[(10, 40), (50, 100)]);
     }
@@ -188,7 +228,7 @@ mod tests {
             let mut file = File::default();
             for (i, &f) in map.iter().enumerate() {
                 if f {
-                    file.add_range((i as u32, i as u32));
+                    file.add_range(Range::new(i as u32, i as u32));
                 }
             }
             file.normalize();
@@ -200,7 +240,7 @@ mod tests {
             let (file, map) = gen_file(i, n);
             for start in 0..n {
                 for end in start..n {
-                    let res = file.contains_range((start, end));
+                    let res = file.contains_range(Range::new(start, end));
                     let cmp = map[(start as usize)..((end + 1) as usize)]
                         .iter()
                         .any(|&f| f);

@@ -131,15 +131,15 @@ fn line_filter() {
         let mut filter = LineFilter::new();
         filter.insert(
             "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c",
-            [(3, 3)].iter().cloned(),
+            [3..4].iter().cloned(),
         );
         filter.insert(
             "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c",
-            [(3, 6), (14, u32::max_value())].iter().cloned(),
+            [3..7, 14..u32::max_value()].iter().cloned(),
         );
         filter.insert(
             "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c",
-            [(12, 15), (25, 30)].iter().cloned(),
+            [12..16, 25..31].iter().cloned(),
         );
 
         let original = open_fixture("report.info")?;
