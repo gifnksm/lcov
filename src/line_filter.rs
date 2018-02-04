@@ -78,7 +78,10 @@ impl File {
         debug_assert!(self.start2end.iter().all(|(s, e)| s <= e));
     }
 
-    fn contains_range<R>(&self, range: R) -> bool where R: Into<Range> {
+    fn contains_range<R>(&self, range: R) -> bool
+    where
+        R: Into<Range>,
+    {
         let range = range.into();
         self.start2end
             .range((Bound::Unbounded, Bound::Included(range.end)))

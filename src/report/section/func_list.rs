@@ -21,9 +21,9 @@ impl FuncList {
         I: Iterator<Item = Result<Record, E>>,
     {
         let mut func_list = vec![];
-        while let Some((key, start_line)) =
-            eat_if_matches!(parser, Record::FunctionName { name, start_line } => (FuncKey { name}, start_line))
-        {
+        while let Some((key, start_line)) = eat_if_matches!(parser,
+            Record::FunctionName { name, start_line } => (FuncKey { name }, start_line)
+        ) {
             func_list.push((
                 key,
                 FuncData {
@@ -56,9 +56,9 @@ impl FuncList {
             }
         }
 
-        while let Some((key, count)) =
-            eat_if_matches!(parser, Record::FunctionData { name, count } => { (FuncKey {name}, count) })
-        {
+        while let Some((key, count)) = eat_if_matches!(parser,
+            Record::FunctionData { name, count } => (FuncKey { name }, count)
+        ) {
             match self.list.get_mut(&key) {
                 Some(data) => data.count += count,
                 None => Err(MergeError::UnmatchedFunctionName)?,
