@@ -2,11 +2,12 @@
 name = "lcov"
 version = "0.1.0"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
-description = "LCOV tracefile parser and merger in pure Rust"
+description = "LCOV tracefile parser/merger/filter in pure Rust."
 readme = "README.md"
 keywords = ["lcov", "coverage", "gcov"]
 categories = ["parsing"]
 license = "MIT/Apache-2.0"
+repository = "https://github.com/gifnksm/lcov/"
 
 [dependencies]
 failure = "0.1"
