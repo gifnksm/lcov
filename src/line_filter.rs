@@ -26,10 +26,10 @@ impl Filter {
         file.normalize();
     }
 
-    pub fn execute(&self, report: &mut Report) {
+    pub fn apply(&self, report: &mut Report) {
         report.filter_map(|(key, mut sect)| {
             self.files.get(&key.source_file).and_then(|file| {
-                file.execute(&mut sect);
+                file.apply(&mut sect);
                 if !sect.is_empty() {
                     Some((key, sect))
                 } else {
@@ -85,7 +85,7 @@ impl File {
         self.contains_range((line, line))
     }
 
-    fn execute(&self, section: &mut Section) {
+    fn apply(&self, section: &mut Section) {
         section.func_list().filter_map(|(key, data)| {
             if self.contains_range((data.start_line, data.end_line)) {
                 Some((key, data))

@@ -145,7 +145,7 @@ fn line_filter() {
         let original = open_fixture("report.info")?;
         let mut original_report = Report::new();
         original_report.merge(original)?;
-        filter.execute(&mut original_report);
+        filter.apply(&mut original_report);
 
         let filtered = open_fixture("report.filtered.info")?;
         let mut filtered_report = Report::new();
