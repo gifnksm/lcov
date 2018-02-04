@@ -1,5 +1,7 @@
 # {{crate}}
 
+[![Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
+
 {{readme}}
 
 ## License

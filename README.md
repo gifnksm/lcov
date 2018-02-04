@@ -1,5 +1,7 @@
 # lcov
 
+[![Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
+
 LCOV tracefile parser/merger/filter in pure Rust.
 
 [LCOV] is a graphical front-end for coverage testing tool [gcov].
