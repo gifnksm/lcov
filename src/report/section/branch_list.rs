@@ -30,8 +30,8 @@ impl BranchList {
             }
         }
 
-        eat_if_matches!(parser, Record::BranchesFound { .. });
-        eat_if_matches!(parser, Record::BranchesHit { .. });
+        let _ = eat_if_matches!(parser, Record::BranchesFound { .. });
+        let _ = eat_if_matches!(parser, Record::BranchesHit { .. });
 
         Ok(())
     }

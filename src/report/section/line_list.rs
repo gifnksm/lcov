@@ -38,8 +38,8 @@ impl LineList {
             }
         }
 
-        eat_if_matches!(parser, Record::LinesFound { .. });
-        eat_if_matches!(parser, Record::LinesHit { .. });
+        let _ = eat_if_matches!(parser, Record::LinesFound { .. });
+        let _ = eat_if_matches!(parser, Record::LinesHit { .. });
 
         Ok(())
     }

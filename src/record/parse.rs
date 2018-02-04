@@ -3,7 +3,7 @@ use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ParseRecordKindError;
 
 impl FromStr for RecordKind {
@@ -94,7 +94,7 @@ impl FromStr for Record {
         use Record::*;
         use RecordKind as Kind;
 
-        s = s.trim_right_matches(&['\n', '\r'] as &[_]);
+        s = s.trim_right_matches::<&[_]>(&['\n', '\r']);
         let mut sp = s.splitn(2, ":");
 
         let kind = sp.next()

@@ -13,7 +13,7 @@ macro_rules! eat_if_matches {
     ($parser:expr, $p:pat) => { eat_if_matches!($parser, $p => {}) };
     ($parser:expr, $p:pat => $body:expr) => {
         match $parser.pop().map_err(MergeError::Read)? {
-            Some($p)=>Some($body),
+            Some($p) => Some($body),
             Some(item) => {
                 $parser.push(item);
                 None

@@ -1,3 +1,12 @@
+#![warn(missing_copy_implementations)]
+#![warn(missing_debug_implementations)]
+#![warn(trivial_casts)]
+#![warn(trivial_numeric_casts)]
+#![warn(unused_extern_crates)]
+#![warn(unused_import_braces)]
+#![warn(unused_qualifications)]
+#![warn(unused_results)]
+
 #[macro_use]
 extern crate failure;
 

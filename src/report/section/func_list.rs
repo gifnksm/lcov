@@ -65,8 +65,8 @@ impl FuncList {
             }
         }
 
-        eat_if_matches!(parser, Record::FunctionsFound { .. });
-        eat_if_matches!(parser, Record::FunctionsHit { .. });
+        let _ = eat_if_matches!(parser, Record::FunctionsFound { .. });
+        let _ = eat_if_matches!(parser, Record::FunctionsHit { .. });
 
         Ok(())
     }

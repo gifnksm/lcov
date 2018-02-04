@@ -1,7 +1,7 @@
 use self::parser::Parser;
 use self::section::Section;
 use super::{Record, RecordKind};
-use std::{iter, mem};
+use std::{fmt, iter, mem};
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::path::PathBuf;
@@ -57,7 +57,7 @@ impl Report {
                     // If the new section contains no data, ignore it.
                     // LCOV merge (`lcov -c -a XXX`) behaves the same way.
                     if !section.is_empty() {
-                        e.insert(section);
+                        let _ = e.insert(section);
                     }
                 }
                 Entry::Occupied(mut e) => e.get_mut().merge(&mut parser)?,
@@ -99,6 +99,12 @@ impl IntoIterator for Report {
 
 pub struct IntoIter {
     inner: Box<Iterator<Item = Record>>,
+}
+
+impl fmt::Debug for IntoIter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "IntoIter {{ .. }}")
+    }
 }
 
 impl Iterator for IntoIter {
