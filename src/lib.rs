@@ -6,6 +6,15 @@
 //! The purpose of this crate is to operate the LCOV tracefile faster than [the original LCOV Perl
 //! implementation][LCOV GitHub].
 //!
+//! # Usage
+//!
+//! Add this to your `Cargo.toml`:
+//!
+//! ```toml
+//! [dev-dependencies]
+//! lcov = "0.1"
+//! ```
+//!
 //! # Performance
 //!
 //! The benchmark test is not performed yet.
@@ -147,6 +156,7 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
+#![doc(html_root_url = "https://docs.rs/lcov/0.1.0")]
 
 #[macro_use]
 extern crate failure;

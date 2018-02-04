@@ -8,6 +8,15 @@ It collects gcov data for multiple source files and stores them into the file ca
 The purpose of this crate is to operate the LCOV tracefile faster than [the original LCOV Perl
 implementation][LCOV GitHub].
 
+## Usage
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dev-dependencies]
+lcov = "0.1"
+```
+
 ## Performance
 
 The benchmark test is not performed yet.
