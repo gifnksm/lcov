@@ -32,13 +32,57 @@ impl FromStr for RecordKind {
     }
 }
 
+/// All possible errors that can occur when parsing LCOV record.
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
 pub enum ParseRecordError {
-    #[fail(display = "field `{}` not found", _0)] FieldNotFound(&'static str),
-    #[fail(display = "too many fields found")] TooManyFields,
+    /// An error indicating that the field of the record is not found in the input.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use lcov::{ParseRecordError, Record};
+    /// assert_eq!("FNDA:3".parse::<Record>(), Err(ParseRecordError::FieldNotFound("name")));
+    /// ```
+    #[fail(display = "field `{}` not found", _0)]
+    FieldNotFound(&'static str),
+
+    /// An error indicating that the number of fields is larger than expected.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use lcov::{ParseRecordError, Record};
+    /// assert_eq!("LF:1,2".parse::<Record>(), Err(ParseRecordError::TooManyFields));
+    /// ```
+    #[fail(display = "too many fields found")]
+    TooManyFields,
+
+    /// An error indicating that parsing integer field failed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use]
+    /// # extern crate matches;
+    /// # extern crate lcov;
+    /// # fn main() {
+    /// use lcov::{ParseRecordError, Record};
+    /// assert_matches!("LH:foo".parse::<Record>(), Err(ParseRecordError::ParseIntError("hit", _)));
+    /// # }
+    /// ```
     #[fail(display = "invalid value of field `{}`: {}", _0, _1)]
     ParseIntError(&'static str, #[cause] ParseIntError),
-    #[fail(display = "unknown record")] UnknownRecord,
+
+    /// An error indicating that the unknown record is found in the input.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use lcov::{ParseRecordError, Record};
+    /// assert_eq!("FOO:1,2".parse::<Record>(), Err(ParseRecordError::UnknownRecord));
+    /// ```
+    #[fail(display = "unknown record")]
+    UnknownRecord,
 }
 
 macro_rules! replace_expr {

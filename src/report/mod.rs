@@ -10,16 +10,206 @@ use std::path::PathBuf;
 mod parser;
 pub(crate) mod section;
 
+/// All possible errors that can occur when merging LCOV records.
 #[derive(Debug, Clone, Fail, Eq, PartialEq)]
 pub enum MergeError<ReadError> {
-    #[fail(display = "failed to read record: {}", _0)] Read(#[cause] ReadError),
-    #[fail(display = "unexpected record `{}`", _0)] UnexpectedRecord(RecordKind),
-    #[fail(display = "unexpected end of stream")] UnexpectedEof,
-    #[fail(display = "unmatched function line")] UnmatchedFunctionLine,
-    #[fail(display = "unmatched function name")] UnmatchedFunctionName,
-    #[fail(display = "unmatches checksum")] UnmatchedChecksum,
+    /// An error indicating that reading record operation failed.
+    ///
+    /// This error occurs when the underlying reader returns an error.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # fn main() {
+    /// use lcov::{Reader, Report, MergeError};
+    /// let mut report = Report::new();
+    /// assert_matches!(report.merge(Reader::new("FOO:1,2,3".as_bytes())), Err(MergeError::Read(_)));
+    /// # }
+    /// ```
+    #[fail(display = "failed to read record: {}", _0)]
+    Read(#[cause] ReadError),
+
+    /// An error indicating that unexpected kind of record is read.
+    ///
+    /// This error occurs when the LCOV tracefile (or underlying reader) contains invalid record sequence.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # fn main() {
+    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// let mut report = Report::new();
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/usr/include/stdio.h
+    /// TN:next_test
+    /// ";
+    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
+    ///                 Err(MergeError::UnexpectedRecord(RecordKind::TestName)));
+    /// # }
+    /// ```
+    #[fail(display = "unexpected record `{}`", _0)]
+    UnexpectedRecord(RecordKind),
+
+    /// An error indicating that unexpected "end of file".
+    ///
+    /// This error occurs when the LCOV tracefile (or underlying reader) contains invalid record sequence.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # fn main() {
+    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// let mut report = Report::new();
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/usr/include/stdio.h
+    /// ";
+    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
+    ///                 Err(MergeError::UnexpectedEof));
+    /// # }
+    /// ```
+    #[fail(display = "unexpected end of file")]
+    UnexpectedEof,
+
+    /// An error indicating that the given function line does not match others.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// # fn try_main() -> Result<(), Error> {
+    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// let mut report = Report::new();
+    /// let input1 = "\
+    /// TN:
+    /// SF:/usr/include/stdio.h
+    /// FN:10,main
+    /// end_of_record
+    /// ";
+    /// let input2 = "\
+    /// TN:
+    /// SF:/usr/include/stdio.h
+    /// FN:15,main
+    /// end_of_record
+    /// ";
+    /// report.merge(Reader::new(input1.as_bytes()))?;
+    /// assert_matches!(report.merge(Reader::new(input2.as_bytes())),
+    ///                 Err(MergeError::UnmatchedFunctionLine));
+    /// # Ok(())
+    /// # }
+    /// # fn main() {
+    /// # try_main().expect("failed to run test.");
+    /// # }
+    /// ```
+    #[fail(display = "unmatched function line")]
+    UnmatchedFunctionLine,
+
+    /// An error indicating that the given function does not exist.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # fn main() {
+    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// let mut report = Report::new();
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/usr/include/stdio.h
+    /// FNDA:123,foo
+    /// end_of_record
+    /// ";
+    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
+    ///                 Err(MergeError::UnmatchedFunctionName));
+    /// # }
+    /// ```
+    #[fail(display = "unmatched function name")]
+    UnmatchedFunctionName,
+
+    /// An error indicating that the given given does not match.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # #[macro_use] extern crate matches;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// # fn try_main() -> Result<(), Error> {
+    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// let mut report = Report::new();
+    /// let input1 = "\
+    /// TN:
+    /// SF:/usr/include/stdio.h
+    /// DA:10,5,valid_checksum
+    /// end_of_record
+    /// ";
+    /// let input2 = "\
+    /// TN:
+    /// SF:/usr/include/stdio.h
+    /// DA:10,1,invalid_checksum
+    /// end_of_record
+    /// ";
+    /// report.merge(Reader::new(input1.as_bytes()))?;
+    /// assert_matches!(report.merge(Reader::new(input2.as_bytes())),
+    ///                 Err(MergeError::UnmatchedChecksum));
+    /// # Ok(())
+    /// # }
+    /// # fn main() {
+    /// # try_main().expect("failed to run test.");
+    /// # }
+    /// ```
+    #[fail(display = "unmatches checksum")]
+    UnmatchedChecksum,
 }
 
+/// An accumulated coverage information from some LCOV tracefiles.
+///
+/// `Report` is used for merging/filtering the coverage information.
+///
+/// # Examples
+///
+/// Merges LCOV tracefiles and outputs the result in LCOV tracefile format:
+///
+/// ```rust
+/// # extern crate failure;
+/// # extern crate lcov;
+/// # use failure::Error;
+/// use lcov::{Report, Reader};
+/// use std::fs::File;
+/// use std::io::BufReader;
+///
+/// # fn foo() -> Result<(), Error> {
+/// let mut report = Report::new();
+///
+/// // Merges a first file.
+/// let reader1 = Reader::new(BufReader::new(File::open("report_a.info")?));
+/// report.merge(reader1)?;
+///
+/// // Merges a second file.
+/// let reader2 = Reader::new(BufReader::new(File::open("report_b.info")?));
+/// report.merge(reader2)?;
+///
+// Outputs the merge result in LCOV tracefile format.
+/// for record in report {
+///     println!("{}", record);
+/// }
+/// # Ok(())
+/// # }
+/// # fn main() {}
+/// ```
+///
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Report {
     sections: BTreeMap<SectionKey, Section>,
@@ -32,10 +222,38 @@ pub(crate) struct SectionKey {
 }
 
 impl Report {
+    /// Creates an empty report.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use lcov::Report;
+    /// let report = Report::new();
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Merges LCOV tracefile into the report.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::{Report, Reader};
+    /// use std::fs::File;
+    /// use std::io::BufReader;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// let mut report = Report::new();
+    /// let reader = Reader::new(BufReader::new(File::open("report.info")?));
+    /// report.merge(reader)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
     pub fn merge<I, E>(&mut self, it: I) -> Result<(), MergeError<E>>
     where
         I: IntoIterator<Item = Result<Record, E>>,

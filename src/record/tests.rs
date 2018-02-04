@@ -8,7 +8,6 @@ fn check_parse_ok(s: &str, rec: &Record) {
     assert_eq!(rec.to_string(), s);
 }
 
-
 #[test]
 fn test_name() {
     fn check_ok(s: &str) {

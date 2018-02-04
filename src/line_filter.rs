@@ -4,16 +4,91 @@ use std::{mem, ops};
 use std::collections::{BTreeMap, Bound, HashMap};
 use std::path::PathBuf;
 
+/// A [`Report`] filter that extracts only the records related to the specified line.
+///
+/// This filter is useful for measuring the coverage of the part changed by a specific commit.
+///
+/// # Examples
+///
+/// ```rust
+/// # extern crate failure;
+/// # extern crate lcov;
+/// # use failure::Error;
+/// use lcov::{LineFilter, Report, Reader};
+/// use std::fs::File;
+/// use std::io::BufReader;
+///
+/// # fn foo() -> Result<(), Error> {
+/// // Creates a `Report` from file.
+/// let mut report = Report::new();
+/// let reader = Reader::new(BufReader::new(File::open("report.info")?));
+/// report.merge(reader)?;
+///
+/// // Setup the filter.
+/// let mut filter = LineFilter::new();
+/// filter.insert("foo.rs", [0..5, 10..20].iter().cloned());
+///
+/// // Filters the coverage information.
+/// filter.apply(&mut report);
+/// # Ok(())
+/// # }
+/// # fn main() {}
+/// ```
+///
+/// [`Report`]: struct.Report.html
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Filter {
     files: HashMap<PathBuf, File>,
 }
 
 impl Filter {
+    /// Creates an empty filter.
+    ///
+    /// An empty filter filters out all records.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::{LineFilter, Report, Reader};
+    /// use std::fs::File;
+    /// use std::io::BufReader;
+    ///
+    /// # fn try_main() -> Result<(), Error> {
+    /// // Creates a `Report` from file.
+    /// let mut report = Report::new();
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/path/to/source/file.rs
+    /// DA:10,10
+    /// DA:20,10
+    /// DA:30,0
+    /// DA:40,0
+    /// LF:4
+    /// LH:2
+    /// end_of_record
+    /// ";
+    /// let reader = Reader::new(input.as_bytes());
+    /// report.merge(reader)?;
+    ///
+    /// // Applies an empty filter.
+    /// LineFilter::new().apply(&mut report);
+    ///
+    /// // No records returned.
+    /// assert_eq!(report.into_iter().next(), None);
+    /// # Ok(())
+    /// # }
+    /// # fn main() {
+    /// # try_main().expect("failed to run test");
+    /// # }
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Registers the ranges for the `path`.
     pub fn insert<P, I, R>(&mut self, path: P, it: I)
     where
         P: Into<PathBuf>,
@@ -27,6 +102,7 @@ impl Filter {
         file.normalize();
     }
 
+    /// Applies the filter to `report`.
     pub fn apply(&self, report: &mut Report) {
         report.filter_map(|(key, mut sect)| {
             self.files.get(&key.source_file).and_then(|file| {
@@ -119,6 +195,7 @@ impl File {
     }
 }
 
+/// An range of lines.
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct Range {
     start: u32,
