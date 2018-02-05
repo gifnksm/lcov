@@ -18,7 +18,7 @@ implementation][LCOV GitHub].
 Add this to your `Cargo.toml`:
 
 ```toml
-[dev-dependencies]
+[dependencies]
 lcov = "0.1"
 ```
 
