@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/{{crate}}.svg)](https://crates.io/crates/{{crate}})
 [![Docs.rs](https://docs.rs/{{crate}}/badge.svg)](https://docs.rs/{{crate}}/)
-[![Travis CI Build Status](https://travis-ci.org/gifnksm/{{crate}}.svg?branch=master)](https://travis-ci.org/gifnksm/{{crate}})
+[![Travis CI Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
 ![LICENSE](https://img.shields.io/crates/l/{{crate}}.svg)
 
 {{readme}}
