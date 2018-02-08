@@ -11,6 +11,7 @@ repository = "https://github.com/gifnksm/lcov/"
 
 [dependencies]
 lcov = { path = "lcov" }
+failure = "0.1"
 
 [badges]
 travis-ci = { repository = "gifnksm/lcov", branch = "master" }
