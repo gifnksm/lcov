@@ -26,7 +26,7 @@ impl LineList {
         ) {
             let org = self.list
                 .entry(LineKey { line })
-                .or_insert(LineData::default());
+                .or_insert_with(LineData::default);
             org.count += count;
             if let Some(checksum) = checksum {
                 if let Some(org_checksum) = org.checksum.as_ref() {
@@ -85,12 +85,12 @@ impl IntoIterator for LineList {
             .chain(iter::once(Line::Found))
             .chain(iter::once(Line::Hit(0)))
             .scan(0, |hit_count, mut rec| {
-                match &mut rec {
-                    &mut Line::Data((_, ref data)) => if data.count > 0 {
+                match rec {
+                    Line::Data((_, ref data)) => if data.count > 0 {
                         *hit_count += 1
                     },
-                    &mut Line::Found => {}
-                    &mut Line::Hit(ref mut hit) => *hit = *hit_count,
+                    Line::Found => {}
+                    Line::Hit(ref mut hit) => *hit = *hit_count,
                 };
                 Some(rec)
             })

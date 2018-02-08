@@ -120,12 +120,10 @@ impl IntoIterator for FuncList {
             .chain(iter::once(Func::Found))
             .chain(iter::once(Func::Hit(0)))
             .scan(0, |hit_count, mut rec| {
-                match &mut rec {
-                    &mut Func::Line(..) => {}
-                    &mut Func::Data(_, ref mut count) if *count > 0 => *hit_count += 1,
-                    &mut Func::Data(..) => {}
-                    &mut Func::Found => {}
-                    &mut Func::Hit(ref mut hit) => *hit = *hit_count,
+                match rec {
+                    Func::Data(_, ref mut count) if *count > 0 => *hit_count += 1,
+                    Func::Hit(ref mut hit) => *hit = *hit_count,
+                    Func::Line(..) | Func::Data(..) | Func::Found => {}
                 }
                 Some(rec)
             })
