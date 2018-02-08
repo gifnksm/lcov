@@ -1,0 +1,22 @@
+[package]
+name = "lcov"
+version = "0.1.0"
+authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
+description = "LCOV tracefile parser/merger/filter in pure Rust."
+readme = "README.md"
+keywords = ["lcov", "coverage", "gcov"]
+categories = ["parsing"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/gifnksm/lcov/"
+
+[dependencies]
+failure = "0.1"
+
+[dev-dependencies]
+glob = "0.2"
+matches = "0.1"
+version-sync = "0.5"
+cargo-readme = "2.0"
+
+[badges]
+travis-ci = { repository = "gifnksm/lcov", branch = "master" }
