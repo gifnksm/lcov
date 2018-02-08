@@ -1,7 +1,6 @@
 # lcov-util
 
 [![Crates.io](https://img.shields.io/crates/v/lcov-util.svg)](https://crates.io/crates/lcov-util)
-[![Docs.rs](https://docs.rs/lcov-util/badge.svg)](https://docs.rs/lcov-util/)
 [![Travis CI Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
 ![LICENSE](https://img.shields.io/crates/l/lcov-util.svg)
 
