@@ -10,10 +10,14 @@ license = "MIT/Apache-2.0"
 repository = "https://github.com/gifnksm/lcov/"
 
 [dependencies]
-lcov = { path = "lcov" }
+lcov = "0.1"
 failure = "0.1"
 
 [badges]
 travis-ci = { repository = "gifnksm/lcov", branch = "master" }
 
 [workspace]
+members = ["lcov"]
+
+[patch.crates-io]
+lcov = { path = "lcov" }
