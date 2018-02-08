@@ -17,7 +17,7 @@
 //!
 //! # Performance
 //!
-//! The benchmark test is not performed yet.
+//! See [the document of `lcov-util`][doc-lcov-util].
 //!
 //! # Data structure
 //!
@@ -144,6 +144,7 @@
 //! [gcov]: http://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 //! [LCOV GitHub]: https://github.com/linux-test-project/lcov
 //! [geninfo(1)]: http://ltp.sourceforge.net/coverage/lcov/geninfo.1.php
+//! [doc-lcov-util]: https://docs.rs/lcov-util/
 //! [`Record`]: enum.Record.html
 //! [`RecordKind`]: enum.RecordKind.html
 

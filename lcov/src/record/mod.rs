@@ -226,7 +226,7 @@ pub enum RecordKind {
 macro_rules! kind_impl {
     ($rec:expr; $($kind:ident),*) => {
         match $rec {
-            $(&Record::$kind { .. } => RecordKind::$kind),*
+            $(Record::$kind { .. } => RecordKind::$kind),*
         }
     }
 }
@@ -243,7 +243,7 @@ impl Record {
     /// ```
     pub fn kind(&self) -> RecordKind {
         kind_impl!{
-            self;
+            *self;
             TestName, SourceFile,
             FunctionName, FunctionData, FunctionsFound, FunctionsHit,
             BranchData, BranchesFound, BranchesHit,

@@ -139,7 +139,7 @@ impl FromStr for Record {
         use RecordKind as Kind;
 
         s = s.trim_right_matches::<&[_]>(&['\n', '\r']);
-        let mut sp = s.splitn(2, ":");
+        let mut sp = s.splitn(2, ':');
 
         let kind = sp.next()
             .unwrap()
@@ -172,7 +172,8 @@ trait ParseField: Sized {
     where
         I: Iterator<Item = &'a str>,
     {
-        let s = it.next().ok_or(ParseRecordError::FieldNotFound(name))?;
+        let s = it.next()
+            .ok_or_else(|| ParseRecordError::FieldNotFound(name))?;
         Self::parse_field(s, name)
     }
 }

@@ -12,43 +12,43 @@ impl Display for Record {
         use Record::*;
 
         let kind = self.kind();
-        match self {
-            &TestName { ref name } => write!(f, "{}:{}", kind, name)?,
-            &SourceFile { ref path } => write!(f, "{}:{}", kind, path.display())?,
-            &FunctionName {
+        match *self {
+            TestName { ref name } => write!(f, "{}:{}", kind, name)?,
+            SourceFile { ref path } => write!(f, "{}:{}", kind, path.display())?,
+            FunctionName {
                 ref name,
                 start_line,
             } => write!(f, "{}:{},{}", kind, start_line, name)?,
-            &FunctionData { ref name, count } => write!(f, "{}:{},{}", kind, count, name)?,
-            &FunctionsFound { found } => write!(f, "{}:{}", kind, found)?,
-            &FunctionsHit { hit } => write!(f, "{}:{}", kind, hit)?,
-            &BranchData {
+            FunctionData { ref name, count } => write!(f, "{}:{},{}", kind, count, name)?,
+            FunctionsFound { found } | BranchesFound { found } | LinesFound { found } => {
+                write!(f, "{}:{}", kind, found)?
+            }
+            FunctionsHit { hit } | BranchesHit { hit } | LinesHit { hit } => {
+                write!(f, "{}:{}", kind, hit)?
+            }
+            BranchData {
                 line,
                 block,
                 branch,
                 taken: Some(taken),
             } => write!(f, "{}:{},{},{},{}", kind, line, block, branch, taken)?,
-            &BranchData {
+            BranchData {
                 line,
                 block,
                 branch,
                 taken: None,
             } => write!(f, "{}:{},{},{},-", kind, line, block, branch)?,
-            &BranchesFound { found } => write!(f, "{}:{}", kind, found)?,
-            &BranchesHit { hit } => write!(f, "{}:{}", kind, hit)?,
-            &LineData {
+            LineData {
                 line,
                 count,
                 checksum: Some(ref checksum),
             } => write!(f, "{}:{},{},{}", kind, line, count, checksum)?,
-            &LineData {
+            LineData {
                 line,
                 count,
                 checksum: None,
             } => write!(f, "{}:{},{}", kind, line, count)?,
-            &LinesFound { found } => write!(f, "{}:{}", kind, found)?,
-            &LinesHit { hit } => write!(f, "{}:{}", kind, hit)?,
-            &EndOfRecord => write!(f, "{}", kind)?,
+            EndOfRecord => write!(f, "{}", kind)?,
         }
         Ok(())
     }

@@ -79,12 +79,12 @@ impl IntoIterator for BranchList {
             .chain(iter::once(Branch::Found))
             .chain(iter::once(Branch::Hit(0)))
             .scan(0, |hit_count, mut rec| {
-                match &mut rec {
-                    &mut Branch::Data((_, ref data)) => if data.taken.unwrap_or(0) > 0 {
+                match rec {
+                    Branch::Data((_, ref data)) => if data.taken.unwrap_or(0) > 0 {
                         *hit_count += 1
                     },
-                    &mut Branch::Found => {}
-                    &mut Branch::Hit(ref mut hit) => *hit = *hit_count,
+                    Branch::Found => {}
+                    Branch::Hit(ref mut hit) => *hit = *hit_count,
                 }
                 Some(rec)
             })

@@ -262,7 +262,7 @@ impl Report {
 
         while let Some(_) = parser.peek().map_err(MergeError::Read)? {
             let test_name =
-                eat_if_matches!(parser, Record::TestName { name } => name).unwrap_or("".into());
+                eat_if_matches!(parser, Record::TestName { name } => name).unwrap_or_else(String::new);
             let source_file = eat!(parser, Record::SourceFile { path } => path);
             let key = SectionKey {
                 test_name,
