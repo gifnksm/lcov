@@ -34,3 +34,7 @@ at your option.
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in lcov by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+
+[LCOV]: http://ltp.sourceforge.net/coverage/lcov.php
+[gcov]: http://gcc.gnu.org/onlinedocs/gcc/Gcov.html
+[LCOV GitHub]: https://github.com/linux-test-project/lcov
