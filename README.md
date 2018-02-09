@@ -4,7 +4,7 @@
 [![Travis CI Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
 ![LICENSE](https://img.shields.io/crates/l/lcov-util.svg)
 
-Utility commands to operate and analyze LCOV trace file at blazingly fast.
+Utility commands to manipulate and analyze LCOV tracefiles blazingly fast.
 
 [LCOV] is a graphical front-end for coverage testing tool [gcov].
 It collects gcov data for multiple source files and stores them into the file called as "tracefile".
