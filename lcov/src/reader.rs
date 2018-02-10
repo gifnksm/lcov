@@ -1,5 +1,7 @@
 use super::{ParseRecordError, Record};
-use std::io::{self, BufRead, Lines};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, Lines};
+use std::path::Path;
 
 /// Reading a LCOV records from a buffered reader.
 #[derive(Debug)]
@@ -8,10 +10,7 @@ pub struct Reader<B> {
     line: u32,
 }
 
-impl<B> Reader<B>
-where
-    B: BufRead,
-{
+impl<B> Reader<B> {
     /// Creates a new `Reader`.
     ///
     /// # Examples
@@ -25,19 +24,53 @@ where
     /// use lcov::Reader;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let file = File::open("report.info")?;
-    /// let buf = BufReader::new(file);
-    /// let reader = Reader::new(buf);
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/path/to/source/file.rs
+    /// DA:1,2
+    /// DA:3,0
+    /// DA:5,6
+    /// LF:3
+    /// LH:2
+    /// end_of_record
+    /// ";
+    ///
+    /// let reader = Reader::new(input.as_bytes());
     /// # Ok(())
     /// # }
     /// # fn main() {}
     /// ```
-    pub fn new(buf: B) -> Reader<B> {
+    pub fn new(buf: B) -> Reader<B>
+    where
+        B: BufRead,
+    {
         Reader {
             lines: buf.lines(),
             line: 0,
         }
     }
+}
+
+/// Opens a LCOV tracefile.
+///
+/// # Example
+///
+/// ```rust
+/// # extern crate failure;
+/// # extern crate lcov;
+/// # use failure::Error;
+///
+/// # fn foo() -> Result<(), Error> {
+/// let reader = lcov::open_file("report.info")?;
+/// # Ok(())
+/// # }
+/// # fn main() {}
+/// ```
+pub fn open_file<P>(path: P) -> Result<Reader<BufReader<File>>, io::Error>
+where
+    P: AsRef<Path>,
+{
+    Ok(Reader::new(BufReader::new(File::open(path)?)))
 }
 
 /// All possible errors that can occur when reading LCOV tracefile.

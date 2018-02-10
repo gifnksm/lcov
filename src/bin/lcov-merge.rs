@@ -14,10 +14,8 @@ extern crate failure;
 extern crate lcov;
 
 use failure::Error;
-use lcov::{Reader, Report};
+use lcov::Report;
 use std::{env, process};
-use std::fs::File;
-use std::io::BufReader;
 use std::path::Path;
 
 fn run<I, P>(it: I) -> Result<(), Error>
@@ -28,8 +26,7 @@ where
     let mut report = Report::new();
 
     for path in it {
-        let file = File::open(path.as_ref())?;
-        let reader = Reader::new(BufReader::new(file));
+        let reader = lcov::open_file(path)?;
         report.merge(reader)?;
     }
 

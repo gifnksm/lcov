@@ -186,19 +186,17 @@ pub enum MergeError<ReadError> {
 /// # extern crate failure;
 /// # extern crate lcov;
 /// # use failure::Error;
-/// use lcov::{Report, Reader};
-/// use std::fs::File;
-/// use std::io::BufReader;
+/// use lcov::Report;
 ///
 /// # fn foo() -> Result<(), Error> {
 /// let mut report = Report::new();
 ///
 /// // Merges a first file.
-/// let reader1 = Reader::new(BufReader::new(File::open("report_a.info")?));
+/// let reader1 = lcov::open_file("report_a.info")?;
 /// report.merge(reader1)?;
 ///
 /// // Merges a second file.
-/// let reader2 = Reader::new(BufReader::new(File::open("report_b.info")?));
+/// let reader2 = lcov::open_file("report_b.info")?;
 /// report.merge(reader2)?;
 ///
 // Outputs the merge result in LCOV tracefile format.
@@ -242,13 +240,11 @@ impl Report {
     /// # extern crate failure;
     /// # extern crate lcov;
     /// # use failure::Error;
-    /// use lcov::{Report, Reader};
-    /// use std::fs::File;
-    /// use std::io::BufReader;
+    /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
     /// let mut report = Report::new();
-    /// let reader = Reader::new(BufReader::new(File::open("report.info")?));
+    /// let reader = lcov::open_file("report.info")?;
     /// report.merge(reader)?;
     /// # Ok(())
     /// # }
@@ -261,8 +257,8 @@ impl Report {
         let mut parser = Parser::new(it.into_iter());
 
         while let Some(_) = parser.peek().map_err(MergeError::Read)? {
-            let test_name =
-                eat_if_matches!(parser, Record::TestName { name } => name).unwrap_or_else(String::new);
+            let test_name = eat_if_matches!(parser, Record::TestName { name } => name)
+                .unwrap_or_else(String::new);
             let source_file = eat!(parser, Record::SourceFile { path } => path);
             let key = SectionKey {
                 test_name,

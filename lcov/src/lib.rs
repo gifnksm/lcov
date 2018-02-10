@@ -44,15 +44,11 @@
 //! # extern crate lcov;
 //! # use failure::Error;
 //! # fn try_main() -> Result<(), Error> {
-//! use std::fs::File;
-//! use std::io::BufReader;
-//! use lcov::{Reader, Record, RecordKind};
+//! use lcov::{Record, RecordKind};
 //!
-//! let file = File::open("tests/fixtures/report.info")?;
-//! let buf = BufReader::new(file);
-//!
+//! // `lcov::open_file` returns `Reader`.
 //! // `Reader` is an iterator that iterates over `Result<lcov::Record, E>` read from the input buffer.
-//! let mut reader = Reader::new(buf);
+//! let mut reader = lcov::open_file("tests/fixtures/report.info")?;
 //!
 //! // Collect the read records into a vector.
 //! let records = reader.collect::<Result<Vec<_>, _>>()?;
@@ -114,19 +110,17 @@
 //! # extern crate lcov;
 //! # use failure::Error;
 //! # fn try_main() -> Result<(), Error> {
-//! use std::fs::File;
-//! use std::io::BufReader;
-//! use lcov::{Reader, Record, RecordKind, Report};
+//! use lcov::{Record, RecordKind, Report};
 //!
 //! // Creates an empty `Report`.
 //! let mut report = Report::new();
 //!
 //! // Merges a first file.
-//! let reader1 = Reader::new(BufReader::new(File::open("tests/fixtures/report.init.info")?));
+//! let reader1 = lcov::open_file("tests/fixtures/report.init.info")?;
 //! report.merge(reader1);
 //!
 //! // Merges a second file.
-//! let reader2 = Reader::new(BufReader::new(File::open("tests/fixtures/report.run.info")?));
+//! let reader2 = lcov::open_file("tests/fixtures/report.run.info")?;
 //! report.merge(reader2);
 //!
 //! // Outputs the merge result in LCOV tracefile format.
@@ -163,7 +157,7 @@
 extern crate failure;
 
 pub use line_filter::{Filter as LineFilter, Range as LineRange};
-pub use reader::{Error as ReadError, Reader};
+pub use reader::{open_file, Error as ReadError, Reader};
 pub use record::{ParseRecordError, Record, RecordKind};
 pub use report::{MergeError, Report};
 
