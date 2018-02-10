@@ -200,7 +200,7 @@ pub enum MergeError<ReadError> {
 /// report.merge(reader2)?;
 ///
 // Outputs the merge result in LCOV tracefile format.
-/// for record in report {
+/// for record in report.into_records() {
 ///     println!("{}", record);
 /// }
 /// # Ok(())
@@ -282,20 +282,29 @@ impl Report {
         Ok(())
     }
 
-    pub(crate) fn filter_map<F>(&mut self, f: F)
-    where
-        F: FnMut((SectionKey, Section)) -> Option<(SectionKey, Section)>,
-    {
-        let sections = mem::replace(&mut self.sections, BTreeMap::new());
-        self.sections.extend(sections.into_iter().filter_map(f));
-    }
-}
-
-impl IntoIterator for Report {
-    type Item = Record;
-    type IntoIter = IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
+    /// Creates an iterator which iterates over LCOV records.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Report;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// let mut report = Report::new();
+    /// let reader = lcov::open_file("report.info")?;
+    /// report.merge(reader)?;
+    /// // ... Manipulate report
+    /// for record in report.into_records() {
+    ///    println!("{}", record);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn into_records(self) -> IntoRecords {
         let iter = self.sections.into_iter().flat_map(|(key, section)| {
             iter::once(Record::TestName {
                 name: key.test_name,
@@ -305,23 +314,31 @@ impl IntoIterator for Report {
                 .chain(section.into_iter())
                 .chain(iter::once(Record::EndOfRecord))
         });
-        IntoIter {
+        IntoRecords {
             inner: Box::new(iter),
         }
     }
+
+    pub(crate) fn filter_map<F>(&mut self, f: F)
+    where
+        F: FnMut((SectionKey, Section)) -> Option<(SectionKey, Section)>,
+    {
+        let sections = mem::replace(&mut self.sections, BTreeMap::new());
+        self.sections.extend(sections.into_iter().filter_map(f));
+    }
 }
 
-pub struct IntoIter {
+pub struct IntoRecords {
     inner: Box<Iterator<Item = Record>>,
 }
 
-impl fmt::Debug for IntoIter {
+impl fmt::Debug for IntoRecords {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "IntoIter {{ .. }}")
     }
 }
 
-impl Iterator for IntoIter {
+impl Iterator for IntoRecords {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {

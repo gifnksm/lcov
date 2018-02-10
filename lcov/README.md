@@ -109,7 +109,7 @@ let reader2 = lcov::open_file("tests/fixtures/report.run.info")?;
 report.merge(reader2);
 
 // Outputs the merge result in LCOV tracefile format.
-for record in report {
+for record in report.into_records() {
     println!("{}", record);
 }
 ```

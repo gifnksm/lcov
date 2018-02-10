@@ -20,7 +20,7 @@ where
 
 fn check_report_same(report1: Report, report2: Report) {
     assert_eq!(report1, report2);
-    for (rec1, rec2) in report1.into_iter().zip(report2) {
+    for (rec1, rec2) in report1.into_records().zip(report2.into_records()) {
         assert_eq!(rec1, rec2);
     }
 }
@@ -75,7 +75,7 @@ fn is_identical_report() {
             report1.merge::<_, io::Error>(records.iter().cloned().map(Ok))?;
 
             let mut report2 = Report::new();
-            report2.merge::<_, io::Error>(report1.clone().into_iter().map(Ok))?;
+            report2.merge::<_, io::Error>(report1.clone().into_records().map(Ok))?;
 
             check_report_same(report1, report2);
         }

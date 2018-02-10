@@ -124,7 +124,7 @@
 //! report.merge(reader2);
 //!
 //! // Outputs the merge result in LCOV tracefile format.
-//! for record in report {
+//! for record in report.into_records() {
 //!     println!("{}", record);
 //! }
 //! # Ok(())

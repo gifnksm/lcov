@@ -30,7 +30,7 @@ where
         report.merge(reader)?;
     }
 
-    for rec in report {
+    for rec in report.into_records() {
         println!("{}", rec);
     }
 

@@ -77,7 +77,7 @@ impl Filter {
     /// LineFilter::new().apply(&mut report);
     ///
     /// // No records returned.
-    /// assert_eq!(report.into_iter().next(), None);
+    /// assert_eq!(report.into_records().next(), None);
     /// # Ok(())
     /// # }
     /// # fn main() {
