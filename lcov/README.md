@@ -24,7 +24,7 @@ lcov = "0.1"
 
 ## Performance
 
-See [the document of `lcov-util`][doc-lcov-util].
+See [the README of `lcov-util`][readme-lcov-util].
 
 ## Data structure
 
@@ -38,13 +38,13 @@ a colon, a comma-separated field list:
 ```
 
 LCOV record kind is represented as a variant of [`Record`] or [`RecordKind`].
-Each fields of a LCOV record are represented as fields of a struct-like variant of [`Record`].
+Each fields of an LCOV record are represented as fields of a struct-like variant of [`Record`].
 
 For details of the LCOV tracefile syntax, see [the manpage of geninfo][geninfo(1)].
 
 ## Examples
 
-Parsing a LCOV tracefile:
+Parsing an LCOV tracefile:
 
 ```rust
 use lcov::{Record, RecordKind};
@@ -64,7 +64,7 @@ for record in records {
 }
 ```
 
-Parsing a LCOV infomation from `String`:
+Createing an LCOV report from `String`:
 
 ```rust
 use lcov::{Reader, Record};
@@ -109,7 +109,7 @@ let reader2 = lcov::open_file("tests/fixtures/report.run.info")?;
 report.merge(reader2);
 
 // Outputs the merge result in LCOV tracefile format.
-for record in report {
+for record in report.into_records() {
     println!("{}", record);
 }
 ```
@@ -118,7 +118,7 @@ for record in report {
 [gcov]: http://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 [LCOV GitHub]: https://github.com/linux-test-project/lcov
 [geninfo(1)]: http://ltp.sourceforge.net/coverage/lcov/geninfo.1.php
-[doc-lcov-util]: https://docs.rs/lcov-util/
+[readme-lcov-util]: https://github.com/gifnksm/lcov/README.md
 [`Record`]: enum.Record.html
 [`RecordKind`]: enum.RecordKind.html
 

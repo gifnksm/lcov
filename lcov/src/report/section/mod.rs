@@ -7,6 +7,7 @@ mod func_list;
 mod branch_list;
 mod line_list;
 
+/// A coverage information about a source file.
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub(crate) struct Section {
     func_list: FuncList,
