@@ -1,3 +1,8 @@
+//! A coverage report.
+//!
+//! The [`Report`] structure contains coverage information of every file.
+//!
+//! [`Report`]: struct.Report.html
 use self::parser::Parser;
 use self::section::Section;
 use super::{Record, RecordKind};
@@ -23,7 +28,8 @@ pub enum MergeError<ReadError> {
     /// # #[macro_use] extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{Reader, Report, MergeError};
+    /// use lcov::{Reader, Report};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// assert_matches!(report.merge(Reader::new("FOO:1,2,3".as_bytes())), Err(MergeError::Read(_)));
     /// # }
@@ -41,7 +47,8 @@ pub enum MergeError<ReadError> {
     /// # #[macro_use] extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// use lcov::{Reader, Report, RecordKind};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// let input = "\
     /// TN:test_name
@@ -65,7 +72,8 @@ pub enum MergeError<ReadError> {
     /// # #[macro_use] extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// use lcov::{Reader, Report};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// let input = "\
     /// TN:test_name
@@ -88,7 +96,8 @@ pub enum MergeError<ReadError> {
     /// # extern crate lcov;
     /// # use failure::Error;
     /// # fn try_main() -> Result<(), Error> {
-    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// use lcov::{Reader, Report};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// let input1 = "\
     /// TN:
@@ -122,7 +131,8 @@ pub enum MergeError<ReadError> {
     /// # #[macro_use] extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// use lcov::{Reader, Report};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// let input = "\
     /// TN:test_name
@@ -147,7 +157,8 @@ pub enum MergeError<ReadError> {
     /// # extern crate lcov;
     /// # use failure::Error;
     /// # fn try_main() -> Result<(), Error> {
-    /// use lcov::{Reader, RecordKind, Report, MergeError};
+    /// use lcov::{Reader, Report};
+    /// use lcov::report::MergeError;
     /// let mut report = Report::new();
     /// let input1 = "\
     /// TN:
@@ -282,10 +293,10 @@ impl Report {
         Ok(())
     }
 
-    /// Creates an iterator which iterates over LCOV records.
-    /// 
+    /// Creates an iterator which iterates over [LCOV records].
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
     /// # extern crate failure;
     /// # extern crate lcov;
@@ -304,6 +315,8 @@ impl Report {
     /// # }
     /// # fn main() {}
     /// ```
+    ///
+    /// [LCOV records]: enum.Record.html
     pub fn into_records(self) -> IntoRecords {
         let iter = self.sections.into_iter().flat_map(|(key, section)| {
             iter::once(Record::TestName {
@@ -328,6 +341,13 @@ impl Report {
     }
 }
 
+/// An iterator which iterates LCOV records.
+///
+/// This `struct` is created by the [`into_records`] methods on [`Report`].
+/// See its documentation for more.
+///
+/// [`into_records`]: struct.Report.html#method.into_records
+/// [`Report`]: struct.Report.html
 pub struct IntoRecords {
     inner: Box<Iterator<Item = Record>>,
 }

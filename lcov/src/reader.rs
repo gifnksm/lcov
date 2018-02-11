@@ -1,9 +1,16 @@
-use super::{ParseRecordError, Record};
-use std::fs::File;
-use std::io::{self, BufRead, BufReader, Lines};
-use std::path::Path;
+//! A reader of [LCOV records].
+//!
+//! The [`Reader`] structure reads LCOV records from arbitrary buffered reader.
+//!
+//! If you want to create a reader which reads am LCOV tracefile, you can use [`open_file`] function.
+//!
+//! [LCOV records]: ../enum.Record.html
+//! [`Reader`]: struct.Reader.html
+//! [`open_file`]: ../fn.open_file.html
+use super::record::{ParseRecordError, Record};
+use std::io::{self, BufRead, Lines};
 
-/// Reading a LCOV records from a buffered reader.
+/// Reading an LCOV records from a buffered reader.
 #[derive(Debug)]
 pub struct Reader<B> {
     lines: Lines<B>,
@@ -51,28 +58,6 @@ impl<B> Reader<B> {
     }
 }
 
-/// Opens a LCOV tracefile.
-///
-/// # Example
-///
-/// ```rust
-/// # extern crate failure;
-/// # extern crate lcov;
-/// # use failure::Error;
-///
-/// # fn foo() -> Result<(), Error> {
-/// let reader = lcov::open_file("report.info")?;
-/// # Ok(())
-/// # }
-/// # fn main() {}
-/// ```
-pub fn open_file<P>(path: P) -> Result<Reader<BufReader<File>>, io::Error>
-where
-    P: AsRef<Path>,
-{
-    Ok(Reader::new(BufReader::new(File::open(path)?)))
-}
-
 /// All possible errors that can occur when reading LCOV tracefile.
 #[derive(Debug, Fail)]
 pub enum Error {
@@ -90,7 +75,9 @@ pub enum Error {
     /// # #[macro_use] extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{ParseRecordError, ReadError, Reader};
+    /// use lcov::Reader;
+    /// use lcov::reader::Error as ReadError;
+    /// use lcov::record::ParseRecordError;
     /// let mut reader = Reader::new("FOO:1,2".as_bytes());
     /// assert_matches!(reader.next(), Some(Err(ReadError::ParseRecord(1, ParseRecordError::UnknownRecord))));
     /// # }

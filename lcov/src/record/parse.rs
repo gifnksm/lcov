@@ -3,6 +3,7 @@ use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+/// All possible errors that can occur when parsing LCOV record kind.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ParseRecordKindError;
 
@@ -40,7 +41,8 @@ pub enum ParseRecordError {
     /// # Examples
     ///
     /// ```rust
-    /// use lcov::{ParseRecordError, Record};
+    /// use lcov::Record;
+    /// use lcov::record::ParseRecordError;
     /// assert_eq!("FNDA:3".parse::<Record>(), Err(ParseRecordError::FieldNotFound("name")));
     /// ```
     #[fail(display = "field `{}` not found", _0)]
@@ -51,7 +53,8 @@ pub enum ParseRecordError {
     /// # Examples
     ///
     /// ```rust
-    /// use lcov::{ParseRecordError, Record};
+    /// use lcov::Record;
+    /// use lcov::record::ParseRecordError;
     /// assert_eq!("LF:1,2".parse::<Record>(), Err(ParseRecordError::TooManyFields));
     /// ```
     #[fail(display = "too many fields found")]
@@ -66,7 +69,8 @@ pub enum ParseRecordError {
     /// # extern crate matches;
     /// # extern crate lcov;
     /// # fn main() {
-    /// use lcov::{ParseRecordError, Record};
+    /// use lcov::Record;
+    /// use lcov::record::ParseRecordError;
     /// assert_matches!("LH:foo".parse::<Record>(), Err(ParseRecordError::ParseIntError("hit", _)));
     /// # }
     /// ```
@@ -78,7 +82,8 @@ pub enum ParseRecordError {
     /// # Example
     ///
     /// ```rust
-    /// use lcov::{ParseRecordError, Record};
+    /// use lcov::Record;
+    /// use lcov::record::ParseRecordError;
     /// assert_eq!("FOO:1,2".parse::<Record>(), Err(ParseRecordError::UnknownRecord));
     /// ```
     #[fail(display = "unknown record")]

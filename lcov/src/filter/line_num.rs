@@ -1,10 +1,16 @@
-use super::report::Report;
-use super::report::section::Section;
+//! A [`Report`] filter that extracts only the records related to the specified line numbers.
+//!
+//! See [`LineNum`] documentation for more.
+//!
+//! [`Report`]: ../../struct.Report.html
+//! [`LineNum`]: struct.LineNum.html
+use Report;
+use report::section::Section;
 use std::{mem, ops};
 use std::collections::{BTreeMap, Bound, HashMap};
 use std::path::PathBuf;
 
-/// A [`Report`] filter that extracts only the records related to the specified line.
+/// A [`Report`] filter that extracts only the records related to the specified line numbers.
 ///
 /// This filter is useful for measuring the coverage of the part changed by a specific commit.
 ///
@@ -14,7 +20,8 @@ use std::path::PathBuf;
 /// # extern crate failure;
 /// # extern crate lcov;
 /// # use failure::Error;
-/// use lcov::{LineFilter, Report, Reader};
+/// use lcov::{Report, Reader};
+/// use lcov::filter::LineNum;
 /// use std::fs::File;
 /// use std::io::BufReader;
 ///
@@ -25,7 +32,7 @@ use std::path::PathBuf;
 /// report.merge(reader)?;
 ///
 /// // Setup the filter.
-/// let mut filter = LineFilter::new();
+/// let mut filter = LineNum::new();
 /// filter.insert("foo.rs", [0..5, 10..20].iter().cloned());
 ///
 /// // Filters the coverage information.
@@ -37,11 +44,11 @@ use std::path::PathBuf;
 ///
 /// [`Report`]: struct.Report.html
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
-pub struct Filter {
+pub struct LineNum {
     files: HashMap<PathBuf, File>,
 }
 
-impl Filter {
+impl LineNum {
     /// Creates an empty filter.
     ///
     /// An empty filter filters out all records.
@@ -52,7 +59,8 @@ impl Filter {
     /// # extern crate failure;
     /// # extern crate lcov;
     /// # use failure::Error;
-    /// use lcov::{LineFilter, Report, Reader};
+    /// use lcov::{Report, Reader};
+    /// use lcov::filter::LineNum;
     /// use std::fs::File;
     /// use std::io::BufReader;
     ///
@@ -74,7 +82,7 @@ impl Filter {
     /// report.merge(reader)?;
     ///
     /// // Applies an empty filter.
-    /// LineFilter::new().apply(&mut report);
+    /// LineNum::new().apply(&mut report);
     ///
     /// // No records returned.
     /// assert_eq!(report.into_records().next(), None);
@@ -195,7 +203,7 @@ impl File {
     }
 }
 
-/// An range of lines.
+/// A range of lines.
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct Range {
     start: u32,

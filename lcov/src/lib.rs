@@ -17,7 +17,7 @@
 //!
 //! # Performance
 //!
-//! See [the document of `lcov-util`][doc-lcov-util].
+//! See [the README of `lcov-util`][readme-lcov-util].
 //!
 //! # Data structure
 //!
@@ -31,13 +31,13 @@
 //! ```
 //!
 //! LCOV record kind is represented as a variant of [`Record`] or [`RecordKind`].
-//! Each fields of a LCOV record are represented as fields of a struct-like variant of [`Record`].
+//! Each fields of an LCOV record are represented as fields of a struct-like variant of [`Record`].
 //!
 //! For details of the LCOV tracefile syntax, see [the manpage of geninfo][geninfo(1)].
 //!
 //! # Examples
 //!
-//! Parsing a LCOV tracefile:
+//! Parsing an LCOV tracefile:
 //!
 //! ```rust
 //! # extern crate failure;
@@ -66,7 +66,7 @@
 //! # }
 //! ```
 //!
-//! Parsing a LCOV infomation from `String`:
+//! Createing an LCOV report from `String`:
 //!
 //! ```rust
 //! # extern crate failure;
@@ -138,7 +138,7 @@
 //! [gcov]: http://gcc.gnu.org/onlinedocs/gcc/Gcov.html
 //! [LCOV GitHub]: https://github.com/linux-test-project/lcov
 //! [geninfo(1)]: http://ltp.sourceforge.net/coverage/lcov/geninfo.1.php
-//! [doc-lcov-util]: https://docs.rs/lcov-util/
+//! [readme-lcov-util]: https://github.com/gifnksm/lcov/README.md
 //! [`Record`]: enum.Record.html
 //! [`RecordKind`]: enum.RecordKind.html
 
@@ -156,12 +156,13 @@
 #[macro_use]
 extern crate failure;
 
-pub use line_filter::{Filter as LineFilter, Range as LineRange};
-pub use reader::{open_file, Error as ReadError, Reader};
-pub use record::{ParseRecordError, Record, RecordKind};
-pub use report::{MergeError, Report};
+pub use helper::open_file;
+pub use reader::Reader;
+pub use record::{Record, RecordKind};
+pub use report::Report;
 
-mod line_filter;
-mod report;
-mod record;
-mod reader;
+pub mod report;
+pub mod record;
+pub mod reader;
+pub mod filter;
+pub mod helper;

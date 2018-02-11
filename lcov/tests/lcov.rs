@@ -3,7 +3,8 @@ extern crate glob;
 extern crate lcov;
 
 use failure::Error;
-use lcov::{LineFilter, Reader, Record, Report};
+use lcov::{Reader, Record, Report};
+use lcov::filter::LineNum;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -118,7 +119,7 @@ fn merge_report() {
 #[test]
 fn line_filter() {
     fn execute() -> Result<(), Error> {
-        let mut filter = LineFilter::new();
+        let mut filter = LineNum::new();
         filter.insert(
             "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c",
             [3..4].iter().cloned(),

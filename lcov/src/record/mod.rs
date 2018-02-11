@@ -1,4 +1,10 @@
-pub use self::parse::ParseRecordError;
+//! An LCOV record.
+//!
+//! The [`Record`] structure represents all kinds of LCOV records.
+//!
+//! [`Record`]: enum.Record.html
+pub use self::display::*;
+pub use self::parse::*;
 use std::path::PathBuf;
 
 mod parse;
@@ -7,6 +13,14 @@ mod display;
 mod tests;
 
 /// Represents all kinds of LCOV records.
+///
+/// This `struct` can be created by parsing an LCOV record string by [`parse`] method (provided by the `FromStr` trait).
+/// This `struct` can be converted into an LCOV record string by [`to_string`] method (provided by the `ToString` trait).
+///
+/// See those documentation for more.
+///
+/// [`parse`]: enum.Record.html#method.parse
+/// [`to_string`]: enum.Record.html#method.to_string
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Record {
     /// Represents a `TN` record.
