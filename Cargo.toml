@@ -10,7 +10,7 @@ license = "MIT/Apache-2.0"
 repository = "https://github.com/gifnksm/lcov/"
 
 [dependencies]
-lcov = { version = "0.1", path = "lcov" }
+lcov = { version = "0.2", path = "lcov" }
 failure = "0.1"
 
 [badges]
