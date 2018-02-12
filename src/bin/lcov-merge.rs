@@ -12,23 +12,38 @@
 
 extern crate failure;
 extern crate lcov;
+#[macro_use]
+extern crate structopt;
 
 use failure::Error;
 use lcov::Report;
-use std::{env, process};
-use std::path::Path;
+use std::path::PathBuf;
+use std::process;
+use structopt::StructOpt;
 
-fn run<I, P>(it: I) -> Result<(), Error>
-where
-    I: IntoIterator<Item = P>,
-    P: AsRef<Path>,
-{
+#[derive(StructOpt, Debug)]
+#[structopt(about = "Merges LCOV tracefiles")]
+struct Opt {
+    /// Disables varidation such as checksum checking
+    #[structopt(long = "loose")]
+    loose: bool,
+
+    /// LCOV tracefiles to merge
+    #[structopt(name = "FILE", parse(from_os_str))]
+    files: Vec<PathBuf>,
+}
+
+fn run(opt: Opt) -> Result<(), Error> {
     let mut merged_report = Report::new();
 
-    for path in it {
+    for path in &opt.files {
         let reader = lcov::open_file(path)?;
         let report = Report::from_reader(reader)?;
-        merged_report.merge(report)?;
+        if opt.loose {
+            merged_report.merge_lossy(report);
+        } else {
+            merged_report.merge(report)?;
+        }
     }
 
     for rec in merged_report.into_records() {
@@ -39,7 +54,8 @@ where
 }
 
 fn main() {
-    if let Err(e) = run(env::args()) {
+    let opt = Opt::from_args();
+    if let Err(e) = run(opt) {
         eprintln!("{}", e);
         process::exit(1);
     }
