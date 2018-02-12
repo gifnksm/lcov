@@ -16,7 +16,7 @@ fn open_fixture<P>(file: P) -> Result<Reader<BufReader<File>>, Error>
 where
     P: AsRef<Path>,
 {
-    Ok(lcov::open_file(Path::new(FIXTURE_DIR).join(file))?)
+    Ok(Reader::open_file(Path::new(FIXTURE_DIR).join(file))?)
 }
 
 fn check_report_same(report1: Report, report2: Report) {
@@ -69,7 +69,7 @@ fn is_identical_reader() {
 fn is_identical_report() {
     fn execute() -> Result<(), Error> {
         for entry in glob::glob(FIXTURE_GLOB)? {
-            let mut reader = lcov::open_file(entry?)?;
+            let mut reader = Reader::open_file(entry?)?;
             let mut records = reader.collect::<Result<Vec<_>, _>>()?;
 
             let mut report1 = Report::from_reader::<_, io::Error>(records.iter().cloned().map(Ok))?;

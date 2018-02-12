@@ -47,11 +47,10 @@ For details of the LCOV tracefile syntax, see [the manpage of geninfo][geninfo(1
 Parsing an LCOV tracefile:
 
 ```rust
-use lcov::{Record, RecordKind};
+use lcov::{Record, RecordKind, Reader};
 
-// `lcov::open_file` returns `Reader`.
 // `Reader` is an iterator that iterates over `Result<lcov::Record, E>` read from the input buffer.
-let mut reader = lcov::open_file("tests/fixtures/report.info")?;
+let mut reader = Reader::open_file("tests/fixtures/report.info")?;
 
 // Collect the read records into a vector.
 let records = reader.collect::<Result<Vec<_>, _>>()?;
@@ -101,12 +100,10 @@ use lcov::{Record, RecordKind, Report};
 let mut report = Report::new();
 
 // Merges a first file.
-let reader1 = lcov::open_file("tests/fixtures/report.init.info")?;
-report.merge(Report::from_reader(reader1)?)?;
+report.merge(Report::from_file("tests/fixtures/report.init.info")?)?;
 
 // Merges a second file.
-let reader2 = lcov::open_file("tests/fixtures/report.run.info")?;
-report.merge(Report::from_reader(reader2)?)?;
+report.merge(Report::from_file("tests/fixtures/report.run.info")?)?;
 
 // Outputs the merge result in LCOV tracefile format.
 for record in report.into_records() {
