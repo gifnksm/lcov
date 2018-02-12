@@ -23,14 +23,15 @@ where
     I: IntoIterator<Item = P>,
     P: AsRef<Path>,
 {
-    let mut report = Report::new();
+    let mut merged_report = Report::new();
 
     for path in it {
         let reader = lcov::open_file(path)?;
-        report.merge(reader)?;
+        let report = Report::from_reader(reader)?;
+        merged_report.merge(report)?;
     }
 
-    for rec in report.into_records() {
+    for rec in merged_report.into_records() {
         println!("{}", rec);
     }
 

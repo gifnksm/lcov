@@ -3,187 +3,18 @@
 //! The [`Report`] structure contains coverage information of every file.
 //!
 //! [`Report`]: struct.Report.html
+pub use self::error::{MergeError, ParseError};
 use self::parser::Parser;
-use self::section::Section;
+use self::section::Sections;
 use super::{Record, RecordKind};
-use std::{fmt, iter, mem};
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
-use std::path::PathBuf;
+use std::fmt;
 
 #[macro_use]
 mod parser;
-pub(crate) mod section;
-
-/// All possible errors that can occur when merging LCOV records.
-#[derive(Debug, Clone, Fail, Eq, PartialEq)]
-pub enum MergeError<ReadError> {
-    /// An error indicating that reading record operation failed.
-    ///
-    /// This error occurs when the underlying reader returns an error.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # fn main() {
-    /// use lcov::{Reader, Report};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// assert_matches!(report.merge(Reader::new("FOO:1,2,3".as_bytes())), Err(MergeError::Read(_)));
-    /// # }
-    /// ```
-    #[fail(display = "failed to read record: {}", _0)]
-    Read(#[cause] ReadError),
-
-    /// An error indicating that unexpected kind of record is read.
-    ///
-    /// This error occurs when the LCOV tracefile (or underlying reader) contains invalid record sequence.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # fn main() {
-    /// use lcov::{Reader, Report, RecordKind};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// let input = "\
-    /// TN:test_name
-    /// SF:/usr/include/stdio.h
-    /// TN:next_test
-    /// ";
-    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
-    ///                 Err(MergeError::UnexpectedRecord(RecordKind::TestName)));
-    /// # }
-    /// ```
-    #[fail(display = "unexpected record `{}`", _0)]
-    UnexpectedRecord(RecordKind),
-
-    /// An error indicating that unexpected "end of file".
-    ///
-    /// This error occurs when the LCOV tracefile (or underlying reader) contains invalid record sequence.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # fn main() {
-    /// use lcov::{Reader, Report};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// let input = "\
-    /// TN:test_name
-    /// SF:/usr/include/stdio.h
-    /// ";
-    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
-    ///                 Err(MergeError::UnexpectedEof));
-    /// # }
-    /// ```
-    #[fail(display = "unexpected end of file")]
-    UnexpectedEof,
-
-    /// An error indicating that the given function line does not match others.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # extern crate failure;
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # use failure::Error;
-    /// # fn try_main() -> Result<(), Error> {
-    /// use lcov::{Reader, Report};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// let input1 = "\
-    /// TN:
-    /// SF:/usr/include/stdio.h
-    /// FN:10,main
-    /// end_of_record
-    /// ";
-    /// let input2 = "\
-    /// TN:
-    /// SF:/usr/include/stdio.h
-    /// FN:15,main
-    /// end_of_record
-    /// ";
-    /// report.merge(Reader::new(input1.as_bytes()))?;
-    /// assert_matches!(report.merge(Reader::new(input2.as_bytes())),
-    ///                 Err(MergeError::UnmatchedFunctionLine));
-    /// # Ok(())
-    /// # }
-    /// # fn main() {
-    /// # try_main().expect("failed to run test.");
-    /// # }
-    /// ```
-    #[fail(display = "unmatched function line")]
-    UnmatchedFunctionLine,
-
-    /// An error indicating that the given function does not exist.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # fn main() {
-    /// use lcov::{Reader, Report};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// let input = "\
-    /// TN:test_name
-    /// SF:/usr/include/stdio.h
-    /// FNDA:123,foo
-    /// end_of_record
-    /// ";
-    /// assert_matches!(report.merge(Reader::new(input.as_bytes())),
-    ///                 Err(MergeError::UnmatchedFunctionName));
-    /// # }
-    /// ```
-    #[fail(display = "unmatched function name")]
-    UnmatchedFunctionName,
-
-    /// An error indicating that the given given does not match.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # extern crate failure;
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
-    /// # use failure::Error;
-    /// # fn try_main() -> Result<(), Error> {
-    /// use lcov::{Reader, Report};
-    /// use lcov::report::MergeError;
-    /// let mut report = Report::new();
-    /// let input1 = "\
-    /// TN:
-    /// SF:/usr/include/stdio.h
-    /// DA:10,5,valid_checksum
-    /// end_of_record
-    /// ";
-    /// let input2 = "\
-    /// TN:
-    /// SF:/usr/include/stdio.h
-    /// DA:10,1,invalid_checksum
-    /// end_of_record
-    /// ";
-    /// report.merge(Reader::new(input1.as_bytes()))?;
-    /// assert_matches!(report.merge(Reader::new(input2.as_bytes())),
-    ///                 Err(MergeError::UnmatchedChecksum));
-    /// # Ok(())
-    /// # }
-    /// # fn main() {
-    /// # try_main().expect("failed to run test.");
-    /// # }
-    /// ```
-    #[fail(display = "unmatches checksum")]
-    UnmatchedChecksum,
-}
+mod error;
+pub mod section;
 
 /// An accumulated coverage information from some LCOV tracefiles.
 ///
@@ -204,13 +35,13 @@ pub enum MergeError<ReadError> {
 ///
 /// // Merges a first file.
 /// let reader1 = lcov::open_file("report_a.info")?;
-/// report.merge(reader1)?;
+/// report.merge(Report::from_reader(reader1)?)?;
 ///
 /// // Merges a second file.
 /// let reader2 = lcov::open_file("report_b.info")?;
-/// report.merge(reader2)?;
+/// report.merge(Report::from_reader(reader2)?)?;
 ///
-// Outputs the merge result in LCOV tracefile format.
+/// // Outputs the merge result in LCOV tracefile format.
 /// for record in report.into_records() {
 ///     println!("{}", record);
 /// }
@@ -221,13 +52,8 @@ pub enum MergeError<ReadError> {
 ///
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Report {
-    sections: BTreeMap<SectionKey, Section>,
-}
-
-#[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub(crate) struct SectionKey {
-    pub(crate) test_name: String,
-    pub(crate) source_file: PathBuf,
+    /// Coverage information about every source files.
+    pub sections: Sections,
 }
 
 impl Report {
@@ -243,7 +69,7 @@ impl Report {
         Self::default()
     }
 
-    /// Merges LCOV tracefile into the report.
+    /// Creates a report from LCOV record reader.
     ///
     /// # Examples
     ///
@@ -254,46 +80,24 @@ impl Report {
     /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let mut report = Report::new();
     /// let reader = lcov::open_file("report.info")?;
-    /// report.merge(reader)?;
+    /// let report = Report::from_reader(reader)?;
     /// # Ok(())
     /// # }
     /// # fn main() {}
     /// ```
-    pub fn merge<I, E>(&mut self, it: I) -> Result<(), MergeError<E>>
+    pub fn from_reader<I, E>(iter: I) -> Result<Self, ParseError<E>>
     where
         I: IntoIterator<Item = Result<Record, E>>,
     {
-        let mut parser = Parser::new(it.into_iter());
-
-        while let Some(_) = parser.peek().map_err(MergeError::Read)? {
-            let test_name = eat_if_matches!(parser, Record::TestName { name } => name)
-                .unwrap_or_else(String::new);
-            let source_file = eat!(parser, Record::SourceFile { path } => path);
-            let key = SectionKey {
-                test_name,
-                source_file,
-            };
-            match self.sections.entry(key) {
-                Entry::Vacant(e) => {
-                    let mut section = Section::default();
-                    section.merge(&mut parser)?;
-                    // If the new section contains no data, ignore it.
-                    // LCOV merge (`lcov -c -a XXX`) behaves the same way.
-                    if !section.is_empty() {
-                        let _ = e.insert(section);
-                    }
-                }
-                Entry::Occupied(mut e) => e.get_mut().merge(&mut parser)?,
-            }
-            eat!(parser, Record::EndOfRecord);
-        }
-
-        Ok(())
+        let mut parser = Parser::new(iter);
+        let report = Report {
+            sections: section::parse(&mut parser)?,
+        };
+        Ok(report)
     }
 
-    /// Creates an iterator which iterates over [LCOV records].
+    /// Merges a report into `self`.
     ///
     /// # Examples
     ///
@@ -304,9 +108,58 @@ impl Report {
     /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let mut report = Report::new();
     /// let reader = lcov::open_file("report.info")?;
-    /// report.merge(reader)?;
+    /// let mut report = Report::from_reader(reader)?;
+    ///
+    /// let reader2 = lcov::open_file("report2.info")?;
+    /// let report2 = Report::from_reader(reader2)?;
+    /// report.merge(report2)?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+        self.sections.merge(other.sections)
+    }
+
+    /// Merges a report into `self` with ignoring an Errors.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Report;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// let reader = lcov::open_file("report.info")?;
+    /// let mut report = Report::from_reader(reader)?;
+    ///
+    /// let reader2 = lcov::open_file("report2.info")?;
+    /// let report2 = Report::from_reader(reader2)?;
+    /// report.merge_lossy(report2);
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn merge_lossy(&mut self, other: Self) {
+        self.sections.merge_lossy(other.sections)
+    }
+
+    /// Creates an iterator which iterates over [LCOV section].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Report;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// let reader = lcov::open_file("report.info")?;
+    /// let mut report = Report::from_reader(reader)?;
     /// // ... Manipulate report
     /// for record in report.into_records() {
     ///    println!("{}", record);
@@ -318,38 +171,22 @@ impl Report {
     ///
     /// [LCOV records]: enum.Record.html
     pub fn into_records(self) -> IntoRecords {
-        let iter = self.sections.into_iter().flat_map(|(key, section)| {
-            iter::once(Record::TestName {
-                name: key.test_name,
-            }).chain(iter::once(Record::SourceFile {
-                path: key.source_file,
-            }))
-                .chain(section.into_iter())
-                .chain(iter::once(Record::EndOfRecord))
-        });
         IntoRecords {
-            inner: Box::new(iter),
+            iter: section::into_records(self.sections),
         }
-    }
-
-    pub(crate) fn filter_map<F>(&mut self, f: F)
-    where
-        F: FnMut((SectionKey, Section)) -> Option<(SectionKey, Section)>,
-    {
-        let sections = mem::replace(&mut self.sections, BTreeMap::new());
-        self.sections.extend(sections.into_iter().filter_map(f));
     }
 }
 
-/// An iterator which iterates LCOV records.
+/// An iterator which iterates [LCOV records].
 ///
 /// This `struct` is created by the [`into_records`] methods on [`Report`].
 /// See its documentation for more.
 ///
+/// [`LCOV records`]: ../struct.Record.html
 /// [`into_records`]: struct.Report.html#method.into_records
 /// [`Report`]: struct.Report.html
 pub struct IntoRecords {
-    inner: Box<Iterator<Item = Record>>,
+    iter: Box<Iterator<Item = Record>>,
 }
 
 impl fmt::Debug for IntoRecords {
@@ -362,6 +199,40 @@ impl Iterator for IntoRecords {
     type Item = Record;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
+        self.iter.next()
+    }
+}
+
+trait Merge {
+    fn merge(&mut self, other: Self) -> Result<(), MergeError>;
+    fn merge_lossy(&mut self, other: Self);
+}
+
+impl<K, V> Merge for BTreeMap<K, V>
+where
+    K: Ord,
+    V: Merge,
+{
+    fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+        for (key, value) in other {
+            match self.entry(key) {
+                Entry::Vacant(e) => {
+                    let _ = e.insert(value);
+                }
+                Entry::Occupied(mut e) => e.get_mut().merge(value)?,
+            }
+        }
+        Ok(())
+    }
+
+    fn merge_lossy(&mut self, other: Self) {
+        for (key, value) in other {
+            match self.entry(key) {
+                Entry::Vacant(e) => {
+                    let _ = e.insert(value);
+                }
+                Entry::Occupied(mut e) => e.get_mut().merge_lossy(value),
+            }
+        }
     }
 }
