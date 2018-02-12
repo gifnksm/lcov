@@ -8,7 +8,9 @@
 //! [`Reader`]: struct.Reader.html
 //! [`open_file`]: ../fn.open_file.html
 use super::record::{ParseRecordError, Record};
-use std::io::{self, BufRead, Lines};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, Lines};
+use std::path::Path;
 
 /// Reading an LCOV records from a buffered reader.
 #[derive(Debug)]
@@ -47,7 +49,7 @@ impl<B> Reader<B> {
     /// # }
     /// # fn main() {}
     /// ```
-    pub fn new(buf: B) -> Reader<B>
+    pub fn new(buf: B) -> Self
     where
         B: BufRead,
     {
@@ -55,6 +57,31 @@ impl<B> Reader<B> {
             lines: buf.lines(),
             line: 0,
         }
+    }
+}
+
+impl Reader<BufReader<File>> {
+    /// Opens an LCOV tracefile.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Reader;
+    /// #
+    /// # fn foo() -> Result<(), Error> {
+    /// let reader = Reader::open_file("report.info")?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn open_file<P>(path: P) -> Result<Self, io::Error>
+    where
+        P: AsRef<Path>,
+    {
+        Ok(Reader::new(BufReader::new(File::open(path)?)))
     }
 }
 

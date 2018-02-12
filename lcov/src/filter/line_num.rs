@@ -20,16 +20,12 @@ use std::path::PathBuf;
 /// # extern crate failure;
 /// # extern crate lcov;
 /// # use failure::Error;
-/// use lcov::{Report, Reader};
+/// use lcov::Report;
 /// use lcov::filter::LineNum;
-/// use std::fs::File;
-/// use std::io::BufReader;
 ///
 /// # fn foo() -> Result<(), Error> {
 /// // Creates a `Report` from file.
-/// let mut report = Report::new();
-/// let reader = Reader::new(BufReader::new(File::open("report.info")?));
-/// let mut report = Report::from_reader(reader)?;
+/// let mut report = Report::from_file("report.info")?;
 ///
 /// // Setup the filter.
 /// let mut filter = LineNum::new();
@@ -61,8 +57,6 @@ impl LineNum {
     /// # use failure::Error;
     /// use lcov::{Report, Reader};
     /// use lcov::filter::LineNum;
-    /// use std::fs::File;
-    /// use std::io::BufReader;
     ///
     /// # fn try_main() -> Result<(), Error> {
     /// // Creates a `Report` from file.

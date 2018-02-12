@@ -37,8 +37,7 @@ fn run(opt: Opt) -> Result<(), Error> {
     let mut merged_report = Report::new();
 
     for path in &opt.files {
-        let reader = lcov::open_file(path)?;
-        let report = Report::from_reader(reader)?;
+        let report = Report::from_file(path)?;
         if opt.loose {
             merged_report.merge_lossy(report);
         } else {

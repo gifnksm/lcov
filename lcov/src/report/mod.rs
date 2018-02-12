@@ -6,10 +6,12 @@
 pub use self::error::{MergeError, ParseError};
 use self::parser::Parser;
 use self::section::Sections;
-use super::{Record, RecordKind};
+use super::{Reader, Record, RecordKind};
+use super::reader::Error as ReadError;
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::fmt;
+use std::path::Path;
 
 #[macro_use]
 mod parser;
@@ -34,12 +36,10 @@ pub mod section;
 /// let mut report = Report::new();
 ///
 /// // Merges a first file.
-/// let reader1 = lcov::open_file("report_a.info")?;
-/// report.merge(Report::from_reader(reader1)?)?;
+/// report.merge(Report::from_file("report_a.info")?)?;
 ///
 /// // Merges a second file.
-/// let reader2 = lcov::open_file("report_b.info")?;
-/// report.merge(Report::from_reader(reader2)?)?;
+/// report.merge(Report::from_file("report_b.info")?)?;
 ///
 /// // Outputs the merge result in LCOV tracefile format.
 /// for record in report.into_records() {
@@ -77,10 +77,20 @@ impl Report {
     /// # extern crate failure;
     /// # extern crate lcov;
     /// # use failure::Error;
-    /// use lcov::Report;
+    /// use lcov::{Report, Reader};
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let reader = lcov::open_file("report.info")?;
+    /// let input = "\
+    /// TN:test_name
+    /// SF:/path/to/source/file.rs
+    /// DA:1,2
+    /// DA:3,0
+    /// DA:5,6
+    /// LF:3
+    /// LH:2
+    /// end_of_record
+    /// ";
+    /// let reader = Reader::new(input.as_bytes());
     /// let report = Report::from_reader(reader)?;
     /// # Ok(())
     /// # }
@@ -97,6 +107,32 @@ impl Report {
         Ok(report)
     }
 
+    /// Creates a report from LCOV tracefile.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Report;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// let report = Report::from_file("report.info")?;
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn from_file<P>(path: P) -> Result<Self, ParseError<ReadError>>
+    where
+        P: AsRef<Path>,
+    {
+        let reader = Reader::open_file(path)
+            .map_err(ReadError::Io)
+            .map_err(ParseError::Read)?;
+        Self::from_reader(reader)
+    }
+
     /// Merges a report into `self`.
     ///
     /// # Examples
@@ -108,12 +144,8 @@ impl Report {
     /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let reader = lcov::open_file("report.info")?;
-    /// let mut report = Report::from_reader(reader)?;
-    ///
-    /// let reader2 = lcov::open_file("report2.info")?;
-    /// let report2 = Report::from_reader(reader2)?;
-    /// report.merge(report2)?;
+    /// let mut report = Report::from_file("report1.info")?;
+    /// report.merge(Report::from_file("report2.info")?)?;
     /// # Ok(())
     /// # }
     /// # fn main() {}
@@ -133,12 +165,8 @@ impl Report {
     /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let reader = lcov::open_file("report.info")?;
-    /// let mut report = Report::from_reader(reader)?;
-    ///
-    /// let reader2 = lcov::open_file("report2.info")?;
-    /// let report2 = Report::from_reader(reader2)?;
-    /// report.merge_lossy(report2);
+    /// let mut report = Report::from_file("report1.info")?;
+    /// report.merge_lossy(Report::from_file("report2.info")?);
     /// # Ok(())
     /// # }
     /// # fn main() {}
@@ -158,8 +186,7 @@ impl Report {
     /// use lcov::Report;
     ///
     /// # fn foo() -> Result<(), Error> {
-    /// let reader = lcov::open_file("report.info")?;
-    /// let mut report = Report::from_reader(reader)?;
+    /// let mut report = Report::from_file("report.info")?;
     /// // ... Manipulate report
     /// for record in report.into_records() {
     ///    println!("{}", record);
