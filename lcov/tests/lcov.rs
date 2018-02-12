@@ -72,11 +72,9 @@ fn is_identical_report() {
             let mut reader = lcov::open_file(entry?)?;
             let mut records = reader.collect::<Result<Vec<_>, _>>()?;
 
-            let mut report1 = Report::new();
-            report1.merge::<_, io::Error>(records.iter().cloned().map(Ok))?;
-
-            let mut report2 = Report::new();
-            report2.merge::<_, io::Error>(report1.clone().into_records().map(Ok))?;
+            let mut report1 = Report::from_reader::<_, io::Error>(records.iter().cloned().map(Ok))?;
+            let mut report2 =
+                Report::from_reader::<_, io::Error>(report1.clone().into_records().map(Ok))?;
 
             check_report_same(report1, report2);
         }
@@ -101,12 +99,11 @@ fn merge_report() {
             let init = open_fixture(init_file)?;
             let run = open_fixture(run_file)?;
 
-            let mut report1 = Report::new();
-            report1.merge(merged)?;
+            let mut report1 = Report::from_reader(merged)?;
 
             let mut report2 = Report::new();
-            report2.merge(init)?;
-            report2.merge(run)?;
+            report2.merge(Report::from_reader(init)?)?;
+            report2.merge(Report::from_reader(run)?)?;
 
             check_report_same(report1, report2);
         }
@@ -134,13 +131,11 @@ fn line_filter() {
         );
 
         let original = open_fixture("report.info")?;
-        let mut original_report = Report::new();
-        original_report.merge(original)?;
+        let mut original_report = Report::from_reader(original)?;
         filter.apply(&mut original_report);
 
         let filtered = open_fixture("report.filtered.info")?;
-        let mut filtered_report = Report::new();
-        filtered_report.merge(filtered)?;
+        let filtered_report = Report::from_reader(filtered)?;
 
         check_report_same(original_report, filtered_report);
 

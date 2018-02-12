@@ -102,11 +102,11 @@ let mut report = Report::new();
 
 // Merges a first file.
 let reader1 = lcov::open_file("tests/fixtures/report.init.info")?;
-report.merge(reader1);
+report.merge(Report::from_reader(reader1)?)?;
 
 // Merges a second file.
 let reader2 = lcov::open_file("tests/fixtures/report.run.info")?;
-report.merge(reader2);
+report.merge(Report::from_reader(reader2)?)?;
 
 // Outputs the merge result in LCOV tracefile format.
 for record in report.into_records() {

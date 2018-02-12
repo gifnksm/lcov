@@ -1,10 +1,10 @@
 macro_rules! eat {
     ($parser:expr, $p:pat) => { eat!($parser, $p => {}) };
     ($parser:expr, $p:pat => $body:expr) => {
-        match $parser.pop().map_err(MergeError::Read)? {
+        match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => $body,
-            Some(rec) => Err(MergeError::UnexpectedRecord(rec.kind()))?,
-            None => Err(MergeError::UnexpectedEof)?,
+            Some(rec) => Err(ParseError::UnexpectedRecord(rec.kind()))?,
+            None => Err(ParseError::UnexpectedEof)?,
         }
     }
 }
@@ -12,7 +12,7 @@ macro_rules! eat {
 macro_rules! eat_if_matches {
     ($parser:expr, $p:pat) => { eat_if_matches!($parser, $p => {}) };
     ($parser:expr, $p:pat => $body:expr) => {
-        match $parser.pop().map_err(MergeError::Read)? {
+        match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => Some($body),
             Some(item) => {
                 $parser.push(item);
@@ -29,17 +29,23 @@ pub(crate) struct Parser<I, T> {
     next_item: Option<T>,
 }
 
+impl<I, T> Parser<I, T> {
+    pub(crate) fn new<J, E>(iter: J) -> Self
+    where
+        J: IntoIterator<IntoIter = I, Item = Result<T, E>>,
+        I: Iterator<Item = Result<T, E>>,
+    {
+        Parser {
+            iter: iter.into_iter(),
+            next_item: None,
+        }
+    }
+}
+
 impl<I, T, E> Parser<I, T>
 where
     I: Iterator<Item = Result<T, E>>,
 {
-    pub(crate) fn new(iter: I) -> Self {
-        Parser {
-            iter,
-            next_item: None,
-        }
-    }
-
     pub(crate) fn push(&mut self, item: T) {
         assert!(self.next_item.is_none());
         self.next_item = Some(item);

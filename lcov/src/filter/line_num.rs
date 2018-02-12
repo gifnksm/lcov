@@ -5,7 +5,7 @@
 //! [`Report`]: ../../struct.Report.html
 //! [`LineNum`]: struct.LineNum.html
 use Report;
-use report::section::Section;
+use report::section::Value as SectionValue;
 use std::{mem, ops};
 use std::collections::{BTreeMap, Bound, HashMap};
 use std::path::PathBuf;
@@ -29,7 +29,7 @@ use std::path::PathBuf;
 /// // Creates a `Report` from file.
 /// let mut report = Report::new();
 /// let reader = Reader::new(BufReader::new(File::open("report.info")?));
-/// report.merge(reader)?;
+/// let mut report = Report::from_reader(reader)?;
 ///
 /// // Setup the filter.
 /// let mut filter = LineNum::new();
@@ -66,7 +66,6 @@ impl LineNum {
     ///
     /// # fn try_main() -> Result<(), Error> {
     /// // Creates a `Report` from file.
-    /// let mut report = Report::new();
     /// let input = "\
     /// TN:test_name
     /// SF:/path/to/source/file.rs
@@ -79,7 +78,7 @@ impl LineNum {
     /// end_of_record
     /// ";
     /// let reader = Reader::new(input.as_bytes());
-    /// report.merge(reader)?;
+    /// let mut report = Report::from_reader(reader)?;
     ///
     /// // Applies an empty filter.
     /// LineNum::new().apply(&mut report);
@@ -112,16 +111,19 @@ impl LineNum {
 
     /// Applies the filter to `report`.
     pub fn apply(&self, report: &mut Report) {
-        report.filter_map(|(key, mut sect)| {
-            self.files.get(&key.source_file).and_then(|file| {
-                file.apply(&mut sect);
-                if !sect.is_empty() {
-                    Some((key, sect))
-                } else {
-                    None
-                }
-            })
-        })
+        let sections = mem::replace(&mut report.sections, BTreeMap::new())
+            .into_iter()
+            .filter_map(|(key, mut value)| {
+                self.files.get(&key.source_file).and_then(|file| {
+                    file.apply(&mut value);
+                    if !value.is_empty() {
+                        Some((key, value))
+                    } else {
+                        None
+                    }
+                })
+            });
+        report.sections.extend(sections);
     }
 }
 
@@ -178,28 +180,55 @@ impl File {
         self.contains_range(Range::new(line, line))
     }
 
-    fn apply(&self, section: &mut Section) {
-        section.func_list().filter_map(|(key, data)| {
-            if self.contains_range(Range::new(data.start_line, data.end_line)) {
-                Some((key, data))
-            } else {
-                None
+    fn apply(&self, section: &mut SectionValue) {
+        let mut functions = mem::replace(&mut section.functions, BTreeMap::new())
+            .into_iter()
+            .filter_map(|(key, value)| {
+                value
+                    .start_line
+                    .map(|start_line| (start_line, 0, key, value))
+            })
+            .collect::<Vec<_>>();
+        functions.sort_by_key(|&(start_line, _, _, _)| start_line);
+        {
+            let mut end = u32::max_value();
+            for data in functions.iter_mut().rev() {
+                data.1 = end;
+                end = u32::saturating_sub(data.0, 1);
             }
-        });
-        section.branch_list().filter_map(|(key, data)| {
-            if self.contains_line(key.line) {
-                Some((key, data))
-            } else {
-                None
-            }
-        });
-        section.line_list().filter_map(|(key, data)| {
-            if self.contains_line(key.line) {
-                Some((key, data))
-            } else {
-                None
-            }
-        });
+        }
+        let functions = functions
+            .into_iter()
+            .filter_map(|(start_line, end_line, key, value)| {
+                if self.contains_range(Range::new(start_line, end_line)) {
+                    Some((key, value))
+                } else {
+                    None
+                }
+            });
+        section.functions.extend(functions);
+
+        let branches = mem::replace(&mut section.branches, BTreeMap::new())
+            .into_iter()
+            .filter_map(|(key, data)| {
+                if self.contains_line(key.line) {
+                    Some((key, data))
+                } else {
+                    None
+                }
+            });
+        section.branches.extend(branches);
+
+        let lines = mem::replace(&mut section.lines, BTreeMap::new())
+            .into_iter()
+            .filter_map(|(key, data)| {
+                if self.contains_line(key.line) {
+                    Some((key, data))
+                } else {
+                    None
+                }
+            });
+        section.lines.extend(lines);
     }
 }
 
