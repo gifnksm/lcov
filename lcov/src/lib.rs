@@ -12,7 +12,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! lcov = "0.3"
+//! lcov = "0.4"
 //! ```
 //!
 //! # Performance
@@ -148,7 +148,7 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
-#![doc(html_root_url = "https://docs.rs/lcov/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/lcov/0.4.0")]
 
 #[macro_use]
 extern crate failure;

@@ -1,6 +1,6 @@
 [package]
 name = "lcov"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
 description = "LCOV tracefile parser/merger/filter in pure Rust."
 readme = "README.md"
