@@ -1,16 +1,17 @@
-//! A [`Report`] filter that extracts only the records related to the specified line numbers.
+//! A [`Section`] filter that extracts only the records related to the specified line numbers.
 //!
 //! See [`LineNum`] documentation for more.
 //!
-//! [`Report`]: ../../struct.Report.html
+//! [`Section`]: ../../report/section/index.html
 //! [`LineNum`]: struct.LineNum.html
-use Report;
-use report::section::Value as SectionValue;
+use report::section;
 use std::{mem, ops};
-use std::collections::{BTreeMap, Bound, HashMap};
-use std::path::PathBuf;
+use std::collections::{BTreeMap, Bound};
+use std::collections::btree_map::Entry;
+use std::iter::{self, Extend, FromIterator};
+use super::FilterMap;
 
-/// A [`Report`] filter that extracts only the records related to the specified line numbers.
+/// A [`Section`] filter that extracts only the records related to the specified line numbers.
 ///
 /// This filter is useful for measuring the coverage of the part changed by a specific commit.
 ///
@@ -21,27 +22,38 @@ use std::path::PathBuf;
 /// # extern crate lcov;
 /// # use failure::Error;
 /// use lcov::Report;
-/// use lcov::filter::LineNum;
+/// use lcov::filter::{FilterMap, LineNum};
+/// use std::collections::HashMap;
+/// use std::path::PathBuf;
+/// use std::iter::FromIterator;
 ///
 /// # fn foo() -> Result<(), Error> {
 /// // Creates a `Report` from file.
 /// let mut report = Report::from_file("report.info")?;
 ///
 /// // Setup the filter.
-/// let mut filter = LineNum::new();
-/// filter.insert("foo.rs", [0..5, 10..20].iter().cloned());
+/// let mut filter = HashMap::new();
+/// filter.insert(
+///     PathBuf::from("foo.rs"),
+///     LineNum::from_iter([0..5, 10..20].iter().cloned())
+/// );
 ///
 /// // Filters the coverage information.
-/// filter.apply(&mut report);
+/// report.sections.filter_map(|(key, mut value)| {
+///     filter.get(&key.source_file).and_then(|filter| {
+///         filter.apply(&mut value);
+///         if value.is_empty() { None } else { Some((key, value)) }
+///     })
+/// });
 /// # Ok(())
 /// # }
 /// # fn main() {}
 /// ```
 ///
-/// [`Report`]: struct.Report.html
+/// [`Section`]: ../../report/section/index.html
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct LineNum {
-    files: HashMap<PathBuf, File>,
+    start2end: BTreeMap<u32, u32>,
 }
 
 impl LineNum {
@@ -52,91 +64,122 @@ impl LineNum {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
-    /// # use failure::Error;
-    /// use lcov::{Report, Reader};
-    /// use lcov::filter::LineNum;
+    /// use lcov::filter::line_num::LineNum;
     ///
-    /// # fn try_main() -> Result<(), Error> {
-    /// // Creates a `Report` from file.
-    /// let input = "\
-    /// TN:test_name
-    /// SF:/path/to/source/file.rs
-    /// DA:10,10
-    /// DA:20,10
-    /// DA:30,0
-    /// DA:40,0
-    /// LF:4
-    /// LH:2
-    /// end_of_record
-    /// ";
-    /// let reader = Reader::new(input.as_bytes());
-    /// let mut report = Report::from_reader(reader)?;
-    ///
-    /// // Applies an empty filter.
-    /// LineNum::new().apply(&mut report);
-    ///
-    /// // No records returned.
-    /// assert_eq!(report.into_records().next(), None);
-    /// # Ok(())
-    /// # }
-    /// # fn main() {
-    /// # try_main().expect("failed to run test");
-    /// # }
+    /// let filter = LineNum::new();
     /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Registers the ranges for the `path`.
-    pub fn insert<P, I, R>(&mut self, path: P, it: I)
+    /// Inserts a range of lines that those coverage information should be yielded.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use lcov::filter::line_num::LineNum;
+    ///
+    /// let mut filter = LineNum::new();
+    ///
+    /// filter.insert(3..4);
+    /// filter.insert(7..10);
+    /// ```
+    pub fn insert<R>(&mut self, range: R)
     where
-        P: Into<PathBuf>,
-        I: IntoIterator<Item = R>,
         R: Into<Range>,
     {
-        let file = self.files.entry(path.into()).or_insert_with(File::default);
-        for range in it {
-            file.add_range(range);
-        }
-        file.normalize();
+        self.extend(iter::once(range));
     }
 
-    /// Applies the filter to `report`.
-    pub fn apply(&self, report: &mut Report) {
-        let sections = mem::replace(&mut report.sections, BTreeMap::new())
+    /// Applies the filter to `section`.
+    /// # Examples
+    ///
+    /// ```rust
+    /// # extern crate failure;
+    /// # extern crate lcov;
+    /// # use failure::Error;
+    /// use lcov::Report;
+    /// use lcov::filter::{FilterMap, LineNum};
+    /// use std::collections::HashMap;
+    /// use std::path::PathBuf;
+    /// use std::iter::FromIterator;
+    ///
+    /// # fn foo() -> Result<(), Error> {
+    /// // Creates a `Report` from file.
+    /// let mut report = Report::from_file("report.info")?;
+    ///
+    /// // Setup the filter.
+    /// let mut filter = HashMap::new();
+    /// filter.insert(
+    ///     PathBuf::from("foo.rs"),
+    ///     LineNum::from_iter([0..5, 10..20].iter().cloned())
+    /// );
+    ///
+    /// // Filters the coverage information.
+    /// report.sections.filter_map(|(key, mut value)| {
+    ///     filter.get(&key.source_file).and_then(|filter| {
+    ///         filter.apply(&mut value);
+    ///         if value.is_empty() { None } else { Some((key, value)) }
+    ///     })
+    /// });
+    /// # Ok(())
+    /// # }
+    /// # fn main() {}
+    /// ```
+    pub fn apply(&self, section: &mut section::Value) {
+        let mut functions = mem::replace(&mut section.functions, Default::default())
             .into_iter()
-            .filter_map(|(key, mut value)| {
-                self.files.get(&key.source_file).and_then(|file| {
-                    file.apply(&mut value);
-                    if !value.is_empty() {
-                        Some((key, value))
-                    } else {
-                        None
-                    }
-                })
+            .filter_map(|(key, value)| {
+                value
+                    .start_line
+                    .map(|start_line| (start_line, 0, key, value))
+            })
+            .collect::<Vec<_>>();
+        functions.sort_by_key(|&(start_line, _, _, _)| start_line);
+        {
+            let mut end = u32::max_value();
+            for data in functions.iter_mut().rev() {
+                data.1 = end;
+                end = u32::saturating_sub(data.0, 1);
+            }
+        }
+        let functions = functions
+            .into_iter()
+            .filter_map(|(start_line, end_line, key, value)| {
+                if self.contains(Range::new(start_line, end_line)) {
+                    Some((key, value))
+                } else {
+                    None
+                }
             });
-        report.sections.extend(sections);
+        section.functions.extend(functions);
+
+        section.branches.filter_map(|(key, value)| {
+            if self.contains(Range::from_line(key.line)) {
+                Some((key, value))
+            } else {
+                None
+            }
+        });
+        section.lines.filter_map(|(key, value)| {
+            if self.contains(Range::from_line(key.line)) {
+                Some((key, value))
+            } else {
+                None
+            }
+        });
     }
-}
 
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
-struct File {
-    start2end: BTreeMap<u32, u32>,
-}
-
-impl File {
-    fn add_range<R>(&mut self, range: R)
+    fn contains<R>(&self, range: R) -> bool
     where
         R: Into<Range>,
     {
         let range = range.into();
-        if !range.is_valid() {
-            return;
-        }
-        let rend = self.start2end.entry(range.start).or_insert(range.end);
-        *rend = u32::max(*rend, range.end);
+        self.start2end
+            .range((Bound::Unbounded, Bound::Included(range.end)))
+            .next_back()
+            .map(|(&_start, &end)| end >= range.start)
+            .unwrap_or(false)
     }
 
     fn normalize(&mut self) {
@@ -157,72 +200,44 @@ impl File {
 
         debug_assert!(self.start2end.iter().all(|(s, e)| s <= e));
     }
+}
 
-    fn contains_range<R>(&self, range: R) -> bool
+impl<R> FromIterator<R> for LineNum
+where
+    R: Into<Range>,
+{
+    fn from_iter<T>(iter: T) -> Self
     where
-        R: Into<Range>,
+        T: IntoIterator<Item = R>,
     {
-        let range = range.into();
-        self.start2end
-            .range((Bound::Unbounded, Bound::Included(range.end)))
-            .next_back()
-            .map(|(&_start, &end)| end >= range.start)
-            .unwrap_or(false)
+        let mut ranges = Self::new();
+        ranges.extend(iter);
+        ranges.normalize();
+        ranges
     }
+}
 
-    fn contains_line(&self, line: u32) -> bool {
-        self.contains_range(Range::new(line, line))
-    }
-
-    fn apply(&self, section: &mut SectionValue) {
-        let mut functions = mem::replace(&mut section.functions, BTreeMap::new())
-            .into_iter()
-            .filter_map(|(key, value)| {
-                value
-                    .start_line
-                    .map(|start_line| (start_line, 0, key, value))
-            })
-            .collect::<Vec<_>>();
-        functions.sort_by_key(|&(start_line, _, _, _)| start_line);
-        {
-            let mut end = u32::max_value();
-            for data in functions.iter_mut().rev() {
-                data.1 = end;
-                end = u32::saturating_sub(data.0, 1);
+impl<R> Extend<R> for LineNum
+where
+    R: Into<Range>,
+{
+    fn extend<T>(&mut self, iter: T)
+    where
+        T: IntoIterator<Item = R>,
+    {
+        let iter = iter.into_iter().map(R::into).filter(Range::is_valid);
+        for range in iter {
+            match self.start2end.entry(range.start) {
+                Entry::Vacant(e) => {
+                    let _ = e.insert(range.end);
+                }
+                Entry::Occupied(mut e) => {
+                    let rend = e.get_mut();
+                    *rend = u32::max(*rend, range.end);
+                }
             }
         }
-        let functions = functions
-            .into_iter()
-            .filter_map(|(start_line, end_line, key, value)| {
-                if self.contains_range(Range::new(start_line, end_line)) {
-                    Some((key, value))
-                } else {
-                    None
-                }
-            });
-        section.functions.extend(functions);
-
-        let branches = mem::replace(&mut section.branches, BTreeMap::new())
-            .into_iter()
-            .filter_map(|(key, data)| {
-                if self.contains_line(key.line) {
-                    Some((key, data))
-                } else {
-                    None
-                }
-            });
-        section.branches.extend(branches);
-
-        let lines = mem::replace(&mut section.lines, BTreeMap::new())
-            .into_iter()
-            .filter_map(|(key, data)| {
-                if self.contains_line(key.line) {
-                    Some((key, data))
-                } else {
-                    None
-                }
-            });
-        section.lines.extend(lines);
+        self.normalize();
     }
 }
 
@@ -262,6 +277,14 @@ impl Range {
         Range { start, end }
     }
 
+    /// Creates a range which contains one line.
+    pub fn from_line(line: u32) -> Self {
+        Range {
+            start: line,
+            end: line,
+        }
+    }
+
     fn is_valid(&self) -> bool {
         self.start <= self.end
     }
@@ -287,7 +310,7 @@ impl Range {
 
 #[cfg(test)]
 mod tests {
-    use super::{File, Range};
+    use super::{LineNum, Range};
 
     #[test]
     fn join() {
@@ -310,36 +333,32 @@ mod tests {
     }
 
     #[test]
-    fn add_range() {
-        fn check(file: &File, start2end: &[(u32, u32)]) {
+    fn insert() {
+        fn check(file: &LineNum, start2end: &[(u32, u32)]) {
             assert_eq!(file.start2end, start2end.iter().cloned().collect());
         }
 
-        let mut file = File::default();
-        file.add_range(Range::new(10, 10));
+        let mut file = LineNum::default();
+        file.insert(Range::new(10, 10));
         check(&file, &[(10, 10)]);
-        file.add_range(Range::new(15, 20));
+        file.insert(Range::new(15, 20));
         check(&file, &[(10, 10), (15, 20)]);
-        file.add_range(Range::new(15, 40));
+        file.insert(Range::new(15, 40));
         check(&file, &[(10, 10), (15, 40)]);
-        file.add_range(Range::new(10, 40));
-        check(&file, &[(10, 40), (15, 40)]);
-        file.normalize();
+        file.insert(Range::new(10, 40));
         check(&file, &[(10, 40)]);
-
-        file.add_range(Range::new(50, 100));
-        file.normalize();
+        file.insert(Range::new(50, 100));
         check(&file, &[(10, 40), (50, 100)]);
     }
 
     #[test]
     fn contains() {
-        fn gen_file(i: u32, n: u32) -> (File, Vec<bool>) {
+        fn gen_file(i: u32, n: u32) -> (LineNum, Vec<bool>) {
             let map = (0..n).map(|j| (i & (1 << j)) != 0).collect::<Vec<_>>();
-            let mut file = File::default();
+            let mut file = LineNum::default();
             for (i, &f) in map.iter().enumerate() {
                 if f {
-                    file.add_range(Range::new(i as u32, i as u32));
+                    file.insert(Range::new(i as u32, i as u32));
                 }
             }
             file.normalize();
@@ -351,7 +370,7 @@ mod tests {
             let (file, map) = gen_file(i, n);
             for start in 0..n {
                 for end in start..n {
-                    let res = file.contains_range(Range::new(start, end));
+                    let res = file.contains(Range::new(start, end));
                     let cmp = map[(start as usize)..((end + 1) as usize)]
                         .iter()
                         .any(|&f| f);

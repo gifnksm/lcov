@@ -4,9 +4,11 @@ extern crate lcov;
 
 use failure::Error;
 use lcov::{Reader, Record, Report};
-use lcov::filter::LineNum;
+use lcov::filter::{FilterMap, LineNum};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
+use std::iter::FromIterator;
 use std::path::{Path, PathBuf};
 
 const FIXTURE_DIR: &str = "./tests/fixtures";
@@ -116,23 +118,32 @@ fn merge_report() {
 #[test]
 fn line_filter() {
     fn execute() -> Result<(), Error> {
-        let mut filter = LineNum::new();
+        let mut filter = HashMap::new();
         filter.insert(
-            "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c",
-            [3..4].iter().cloned(),
+            PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"),
+            LineNum::from_iter([3..4].iter().cloned()),
         );
         filter.insert(
-            "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c",
-            [3..7, 14..u32::max_value()].iter().cloned(),
+            PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c"),
+            LineNum::from_iter([3..7, 14..u32::max_value()].iter().cloned()),
         );
         filter.insert(
-            "/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c",
-            [12..16, 25..31].iter().cloned(),
+            PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c"),
+            LineNum::from_iter([12..16, 25..31].iter().cloned()),
         );
 
         let original = open_fixture("report.info")?;
         let mut original_report = Report::from_reader(original)?;
-        filter.apply(&mut original_report);
+        original_report.sections.filter_map(|(key, mut value)| {
+            filter.get(&key.source_file).and_then(|filter| {
+                filter.apply(&mut value);
+                if value.is_empty() {
+                    None
+                } else {
+                    Some((key, value))
+                }
+            })
+        });
 
         let filtered = open_fixture("report.filtered.info")?;
         let filtered_report = Report::from_reader(filtered)?;
