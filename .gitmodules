@@ -1,0 +1,3 @@
+[submodule "benchsuite/lcov"]
+	path = benchsuite/lcov
+	url = https://github.com/linux-test-project/lcov.git
