@@ -75,9 +75,18 @@ where
     let mut sections = Sections::new();
 
     while let Some(_) = parser.peek().map_err(ParseError::Read)? {
+        // Sometimes, lcov emits TN: records multiple times, so skip the first TN: record.
+        let mut test_name = None;
+        while let Some(tn) = eat_if_matches!(parser, Record::TestName { name } => name) {
+            test_name = Some(tn);
+        }
+        // Sometimes, lcov emit extra TN: records at the end of the tracefile.
+        if parser.peek().map_err(ParseError::Read)?.is_none() {
+            break;
+        }
+
         let key = Key {
-            test_name: eat_if_matches!(parser, Record::TestName { name } => name)
-                .unwrap_or_else(String::new),
+            test_name: test_name.unwrap_or_else(String::new),
             source_file: eat!(parser, Record::SourceFile { path } => path),
         };
         let value = Value {

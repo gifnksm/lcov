@@ -1,17 +1,21 @@
 macro_rules! eat {
-    ($parser:expr, $p:pat) => { eat!($parser, $p => {}) };
-    ($parser:expr, $p:pat => $body:expr) => {
+    ($parser: expr, $p: pat) => {
+        eat!($parser, $p => {})
+    };
+    ($parser: expr, $p: pat => $body: expr) => {
         match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => $body,
             Some(rec) => Err(ParseError::UnexpectedRecord(rec.kind()))?,
             None => Err(ParseError::UnexpectedEof)?,
         }
-    }
+    };
 }
 
 macro_rules! eat_if_matches {
-    ($parser:expr, $p:pat) => { eat_if_matches!($parser, $p => {}) };
-    ($parser:expr, $p:pat => $body:expr) => {
+    ($parser: expr, $p: pat) => {
+        eat_if_matches!($parser, $p => {})
+    };
+    ($parser: expr, $p: pat => $body: expr) => {
         match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => Some($body),
             Some(item) => {
@@ -20,7 +24,7 @@ macro_rules! eat_if_matches {
             }
             None => None,
         }
-    }
+    };
 }
 
 #[derive(Debug, Clone)]
