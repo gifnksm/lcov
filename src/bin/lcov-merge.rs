@@ -56,6 +56,9 @@ fn main() {
     let opt = Opt::from_args();
     if let Err(e) = run(opt) {
         eprintln!("{}", e);
+        if let Some(bt) = e.cause().backtrace() {
+            eprintln!("{}", bt);
+        }
         process::exit(1);
     }
 }
