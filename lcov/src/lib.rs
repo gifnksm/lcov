@@ -148,7 +148,7 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
-#![doc(html_root_url = "https://docs.rs/lcov/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/lcov/0.4.2")]
 
 #[macro_use]
 extern crate failure;
