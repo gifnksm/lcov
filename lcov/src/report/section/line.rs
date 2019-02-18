@@ -4,6 +4,7 @@
 //!
 //! [`Lines`]: ./type.Linesh.html
 use super::{Merge, MergeError, ParseError, Parser, Record};
+use failure::Error;
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -56,17 +57,17 @@ impl Merge for Value {
     }
 }
 
-pub(crate) fn parse<I, E>(parser: &mut Parser<I, Record>) -> Result<Lines, ParseError<E>>
+pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Lines, ParseError>
 where
-    I: Iterator<Item = Result<Record, E>>,
+    I: Iterator<Item = Result<Record, Error>>,
 {
     let mut lines = Lines::new();
 
     while let Some((line, count, checksum)) = eat_if_matches!(parser,
-            Record::LineData { line, count, checksum } => {
-                (line, count, checksum)
-            }
-        ) {
+        Record::LineData { line, count, checksum } => {
+            (line, count, checksum)
+        }
+    ) {
         let _ = lines.insert(Key { line }, Value { count, checksum });
     }
 
@@ -94,9 +95,11 @@ pub(crate) fn into_records(lines: Lines) -> Box<Iterator<Item = Record>> {
         .chain(iter::once(Line::Hit(0)))
         .scan(0, |hit_count, mut rec| {
             match rec {
-                Line::Data((_, ref data)) => if data.count > 0 {
-                    *hit_count += 1
-                },
+                Line::Data((_, ref data)) => {
+                    if data.count > 0 {
+                        *hit_count += 1
+                    }
+                }
                 Line::Found => {}
                 Line::Hit(ref mut hit) => *hit = *hit_count,
             };

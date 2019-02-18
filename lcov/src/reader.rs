@@ -8,6 +8,7 @@
 //! [`Reader`]: struct.Reader.html
 //! [`open_file`]: ../fn.open_file.html
 use super::record::{ParseRecordError, Record};
+use failure::Fail;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::Path;
@@ -25,8 +26,6 @@ impl<B> Reader<B> {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use std::io::BufReader;
     /// use std::fs::File;
@@ -66,8 +65,6 @@ impl Reader<BufReader<File>> {
     /// # Example
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Reader;
     /// #
@@ -99,8 +96,7 @@ pub enum Error {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::Reader;
     /// use lcov::reader::Error as ReadError;

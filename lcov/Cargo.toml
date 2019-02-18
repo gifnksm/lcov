@@ -8,6 +8,7 @@ keywords = ["lcov", "coverage", "gcov"]
 categories = ["parsing"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/gifnksm/lcov/"
+edition = "2018"
 
 [dependencies]
 failure = "0.1"

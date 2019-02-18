@@ -4,6 +4,7 @@
 //!
 //! [`Branches`]: ./type.Branches.html
 use super::{Merge, MergeError, ParseError, Parser, Record};
+use failure::Error;
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -49,17 +50,17 @@ impl Merge for Value {
     }
 }
 
-pub(crate) fn parse<I, E>(parser: &mut Parser<I, Record>) -> Result<Branches, ParseError<E>>
+pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Branches, ParseError>
 where
-    I: Iterator<Item = Result<Record, E>>,
+    I: Iterator<Item = Result<Record, Error>>,
 {
     let mut branches = Branches::new();
 
     while let Some((key, value)) = eat_if_matches!(parser,
-            Record::BranchData { line, block, branch, taken } => {
-                (Key { line, block, branch }, Value { taken })
-            }
-        ) {
+        Record::BranchData { line, block, branch, taken } => {
+            (Key { line, block, branch }, Value { taken })
+        }
+    ) {
         let _ = branches.insert(key, value);
     }
 
@@ -88,9 +89,11 @@ pub(crate) fn into_records(branches: Branches) -> Box<Iterator<Item = Record>> {
         .chain(iter::once(Branch::Hit(0)))
         .scan(0, |hit_count, mut rec| {
             match rec {
-                Branch::Data((_, ref data)) => if data.taken.unwrap_or(0) > 0 {
-                    *hit_count += 1
-                },
+                Branch::Data((_, ref data)) => {
+                    if data.taken.unwrap_or(0) > 0 {
+                        *hit_count += 1
+                    }
+                }
                 Branch::Found => {}
                 Branch::Hit(ref mut hit) => *hit = *hit_count,
             }

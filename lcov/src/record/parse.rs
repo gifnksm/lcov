@@ -1,4 +1,5 @@
 use super::{Record, RecordKind};
+use failure::Fail;
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -65,9 +66,7 @@ pub enum ParseRecordError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::Record;
     /// use lcov::record::ParseRecordError;
@@ -91,7 +90,9 @@ pub enum ParseRecordError {
 }
 
 macro_rules! replace_expr {
-    ($_id:ident $sub:expr) => {$sub}
+    ($_id:ident $sub:expr) => {
+        $sub
+    };
 }
 macro_rules! count_idents {
     ($($id:ident)*) => { 0 $(+ replace_expr!($id 1))* }
@@ -146,7 +147,8 @@ impl FromStr for Record {
         s = s.trim_right_matches::<&[_]>(&['\n', '\r']);
         let mut sp = s.splitn(2, ':');
 
-        let kind = sp.next()
+        let kind = sp
+            .next()
             .unwrap()
             .parse::<RecordKind>()
             .map_err(|_e| ParseRecordError::UnknownRecord)?;
@@ -177,7 +179,8 @@ trait ParseField: Sized {
     where
         I: Iterator<Item = &'a str>,
     {
-        let s = it.next()
+        let s = it
+            .next()
             .ok_or_else(|| ParseRecordError::FieldNotFound(name))?;
         Self::parse_field(s, name)
     }

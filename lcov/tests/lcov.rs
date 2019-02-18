@@ -1,10 +1,6 @@
-extern crate failure;
-extern crate glob;
-extern crate lcov;
-
 use failure::Error;
-use lcov::{Reader, Record, Report};
 use lcov::filter::{FilterMap, LineNum};
+use lcov::{Reader, Record, Report};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
@@ -33,7 +29,7 @@ fn is_identical_parse() {
     fn execute() -> Result<(), Error> {
         for entry in glob::glob(FIXTURE_GLOB)? {
             let file = File::open(entry?)?;
-            let mut reader = BufReader::new(file);
+            let reader = BufReader::new(file);
             for line in reader.lines() {
                 let line = line?;
                 let rec = line.parse::<Record>()?;
@@ -53,7 +49,7 @@ fn is_identical_reader() {
             let mut file = File::open(entry?)?;
             let mut input = String::new();
             file.read_to_string(&mut input)?;
-            let mut reader = Reader::new(BufReader::new(input.as_bytes()));
+            let reader = Reader::new(BufReader::new(input.as_bytes()));
 
             let mut output = vec![];
             for rec in reader {
@@ -71,11 +67,11 @@ fn is_identical_reader() {
 fn is_identical_report() {
     fn execute() -> Result<(), Error> {
         for entry in glob::glob(FIXTURE_GLOB)? {
-            let mut reader = Reader::open_file(entry?)?;
-            let mut records = reader.collect::<Result<Vec<_>, _>>()?;
+            let reader = Reader::open_file(entry?)?;
+            let records = reader.collect::<Result<Vec<_>, _>>()?;
 
-            let mut report1 = Report::from_reader::<_, io::Error>(records.iter().cloned().map(Ok))?;
-            let mut report2 =
+            let report1 = Report::from_reader::<_, io::Error>(records.iter().cloned().map(Ok))?;
+            let report2 =
                 Report::from_reader::<_, io::Error>(report1.clone().into_records().map(Ok))?;
 
             check_report_same(report1, report2);
@@ -101,7 +97,7 @@ fn merge_report() {
             let init = open_fixture(init_file)?;
             let run = open_fixture(run_file)?;
 
-            let mut report1 = Report::from_reader(merged)?;
+            let report1 = Report::from_reader(merged)?;
 
             let mut report2 = Report::new();
             report2.merge(Report::from_reader(init)?)?;

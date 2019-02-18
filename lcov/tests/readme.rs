@@ -1,5 +1,3 @@
-extern crate cargo_readme;
-
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -15,7 +13,8 @@ fn test_readme_identical() {
         true,
         true,
         true,
-    ).expect("failed to generate readme");
+    )
+    .expect("failed to generate readme");
     expected.push('\n');
 
     let mut readme = String::new();

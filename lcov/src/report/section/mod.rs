@@ -7,12 +7,13 @@ use self::branch::Branches;
 use self::function::Functions;
 use self::line::Lines;
 use super::{Merge, MergeError, ParseError, Parser, Record};
+use failure::Error;
 use std::collections::BTreeMap;
 use std::iter;
 use std::path::PathBuf;
 
-pub mod function;
 pub mod branch;
+pub mod function;
 pub mod line;
 
 /// A map of coverage information about source files.
@@ -68,9 +69,9 @@ impl Merge for Value {
     }
 }
 
-pub(crate) fn parse<I, E>(parser: &mut Parser<I, Record>) -> Result<Sections, ParseError<E>>
+pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Sections, ParseError>
 where
-    I: Iterator<Item = Result<Record, E>>,
+    I: Iterator<Item = Result<Record, Error>>,
 {
     let mut sections = Sections::new();
 
