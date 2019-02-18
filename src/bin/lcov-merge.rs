@@ -10,9 +10,7 @@
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
 
-extern crate failure;
-extern crate lcov;
-extern crate structopt;
+use structopt;
 
 use failure::Error;
 use lcov::Report;

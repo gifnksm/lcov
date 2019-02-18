@@ -5,7 +5,7 @@
 //! [`Section`]: ../../report/section/index.html
 //! [`LineNum`]: struct.LineNum.html
 use super::FilterMap;
-use report::section;
+use crate::report::section;
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, Bound};
 use std::iter::{self, Extend, FromIterator};
@@ -18,8 +18,6 @@ use std::{mem, ops};
 /// # Examples
 ///
 /// ```rust
-/// # extern crate failure;
-/// # extern crate lcov;
 /// # use failure::Error;
 /// use lcov::Report;
 /// use lcov::filter::{FilterMap, LineNum};
@@ -95,8 +93,6 @@ impl LineNum {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Report;
     /// use lcov::filter::{FilterMap, LineNum};

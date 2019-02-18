@@ -1,5 +1,3 @@
-extern crate cargo_readme;
-
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;

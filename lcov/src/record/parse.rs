@@ -1,4 +1,5 @@
 use super::{Record, RecordKind};
+use failure::Fail;
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -65,9 +66,7 @@ pub enum ParseRecordError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use]
-    /// # extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::Record;
     /// use lcov::record::ParseRecordError;

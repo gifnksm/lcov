@@ -1,5 +1,5 @@
 use super::RecordKind;
-use failure::Error;
+use failure::{Error, Fail};
 
 /// All possible errors that can occur when parsing LCOV records.
 #[derive(Debug, Fail)]
@@ -11,8 +11,7 @@ pub enum ParseError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::{Reader, Report};
     /// use lcov::report::ParseError;
@@ -29,8 +28,7 @@ pub enum ParseError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::{Reader, Report, RecordKind};
     /// use lcov::report::ParseError;
@@ -53,8 +51,7 @@ pub enum ParseError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # fn main() {
     /// use lcov::{Reader, Report};
     /// use lcov::report::ParseError;
@@ -80,9 +77,7 @@ pub enum MergeError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate failure;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # use failure::Error;
     /// # fn try_main() -> Result<(), Error> {
     /// use lcov::{Reader, Report};
@@ -119,9 +114,7 @@ pub enum MergeError {
     /// # Examples
     ///
     /// ```rust
-    /// # #[macro_use] extern crate matches;
-    /// # extern crate failure;
-    /// # extern crate lcov;
+    /// # use matches::assert_matches;
     /// # use failure::Error;
     /// # fn try_main() -> Result<(), Error> {
     /// use lcov::{Reader, Report};

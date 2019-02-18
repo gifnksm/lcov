@@ -40,8 +40,6 @@
 //! Parsing an LCOV tracefile:
 //!
 //! ```rust
-//! # extern crate failure;
-//! # extern crate lcov;
 //! # use failure::Error;
 //! # fn try_main() -> Result<(), Error> {
 //! use lcov::{Record, RecordKind, Reader};
@@ -68,8 +66,6 @@
 //! Createing an LCOV report from `String`:
 //!
 //! ```rust
-//! # extern crate failure;
-//! # extern crate lcov;
 //! # use failure::Error;
 //! # fn try_main() -> Result<(), Error> {
 //! use lcov::{Reader, Record};
@@ -105,8 +101,6 @@
 //! Merging tracefiles:
 //!
 //! ```rust
-//! # extern crate failure;
-//! # extern crate lcov;
 //! # use failure::Error;
 //! # fn try_main() -> Result<(), Error> {
 //! use lcov::{Record, RecordKind, Report};
@@ -149,9 +143,6 @@
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
 #![doc(html_root_url = "https://docs.rs/lcov/0.4.2")]
-
-#[macro_use]
-extern crate failure;
 
 pub use reader::Reader;
 pub use record::{Record, RecordKind};

@@ -28,8 +28,6 @@ pub mod section;
 /// Merges LCOV tracefiles and outputs the result in LCOV tracefile format:
 ///
 /// ```rust
-/// # extern crate failure;
-/// # extern crate lcov;
 /// # use failure::Error;
 /// use lcov::Report;
 ///
@@ -75,8 +73,6 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::{Report, Reader};
     ///
@@ -114,8 +110,6 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Report;
     ///
@@ -142,8 +136,6 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Report;
     ///
@@ -163,8 +155,6 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Report;
     ///
@@ -184,8 +174,6 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # extern crate failure;
-    /// # extern crate lcov;
     /// # use failure::Error;
     /// use lcov::Report;
     ///
