@@ -157,7 +157,7 @@ pub use reader::Reader;
 pub use record::{Record, RecordKind};
 pub use report::Report;
 
-pub mod report;
-pub mod record;
-pub mod reader;
 pub mod filter;
+pub mod reader;
+pub mod record;
+pub mod report;

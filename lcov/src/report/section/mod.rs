@@ -11,8 +11,8 @@ use std::collections::BTreeMap;
 use std::iter;
 use std::path::PathBuf;
 
-pub mod function;
 pub mod branch;
+pub mod function;
 pub mod line;
 
 /// A map of coverage information about source files.

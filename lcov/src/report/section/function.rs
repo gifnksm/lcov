@@ -62,8 +62,8 @@ where
 {
     let mut functions = Functions::new();
     while let Some((key, start_line)) = eat_if_matches!(parser,
-            Record::FunctionName { name, start_line } => (Key { name }, start_line)
-        ) {
+        Record::FunctionName { name, start_line } => (Key { name }, start_line)
+    ) {
         let _ = functions.insert(
             key,
             Value {
@@ -74,8 +74,8 @@ where
     }
 
     while let Some((key, count)) = eat_if_matches!(parser,
-            Record::FunctionData { name, count } => (Key { name }, count)
-        ) {
+        Record::FunctionData { name, count } => (Key { name }, count)
+    ) {
         let data = functions.entry(key).or_insert_with(Value::default);
         data.count += count;
     }
@@ -108,7 +108,8 @@ pub(crate) fn into_records(functions: Functions) -> Box<Iterator<Item = Record>>
     let count = functions
         .into_iter()
         .map(|(key, data)| Func::Data(key.name, data.count));
-    let iter = line.chain(count)
+    let iter = line
+        .chain(count)
         .chain(iter::once(Func::Found))
         .chain(iter::once(Func::Hit(0)))
         .scan(0, |hit_count, mut rec| {

@@ -15,7 +15,8 @@ fn test_readme_identical() {
         true,
         true,
         true,
-    ).expect("failed to generate readme");
+    )
+    .expect("failed to generate readme");
     expected.push('\n');
 
     let mut readme = String::new();

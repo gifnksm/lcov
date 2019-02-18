@@ -7,8 +7,8 @@ pub use self::display::*;
 pub use self::parse::*;
 use std::path::PathBuf;
 
-mod parse;
 mod display;
+mod parse;
 #[cfg(test)]
 mod tests;
 
@@ -256,7 +256,7 @@ impl Record {
     /// assert_eq!(rec.kind(), RecordKind::LinesHit);
     /// ```
     pub fn kind(&self) -> RecordKind {
-        kind_impl!{
+        kind_impl! {
             *self;
             TestName, SourceFile,
             FunctionName, FunctionData, FunctionsFound, FunctionsHit,

@@ -3,8 +3,8 @@ extern crate glob;
 extern crate lcov;
 
 use failure::Error;
-use lcov::{Reader, Record, Report};
 use lcov::filter::{FilterMap, LineNum};
+use lcov::{Reader, Record, Report};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};

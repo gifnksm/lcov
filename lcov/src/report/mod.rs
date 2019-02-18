@@ -6,10 +6,10 @@
 pub use self::error::{MergeError, ParseError};
 use self::parser::Parser;
 use self::section::Sections;
-use super::{Reader, Record, RecordKind};
 use super::reader::Error as ReadError;
-use std::collections::BTreeMap;
+use super::{Reader, Record, RecordKind};
 use std::collections::btree_map::Entry;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
