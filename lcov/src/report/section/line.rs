@@ -4,6 +4,7 @@
 //!
 //! [`Lines`]: ./type.Linesh.html
 use super::{Merge, MergeError, ParseError, Parser, Record};
+use failure::Error;
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -56,9 +57,9 @@ impl Merge for Value {
     }
 }
 
-pub(crate) fn parse<I, E>(parser: &mut Parser<I, Record>) -> Result<Lines, ParseError<E>>
+pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Lines, ParseError>
 where
-    I: Iterator<Item = Result<Record, E>>,
+    I: Iterator<Item = Result<Record, Error>>,
 {
     let mut lines = Lines::new();
 

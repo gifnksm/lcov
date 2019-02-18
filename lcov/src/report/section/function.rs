@@ -4,6 +4,7 @@
 //!
 //! [`Functions`]: ./type.Functions.html
 use super::{Merge, MergeError, ParseError, Parser, Record};
+use failure::Error;
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -56,9 +57,9 @@ impl Merge for Value {
     }
 }
 
-pub(crate) fn parse<I, E>(parser: &mut Parser<I, Record>) -> Result<Functions, ParseError<E>>
+pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Functions, ParseError>
 where
-    I: Iterator<Item = Result<Record, E>>,
+    I: Iterator<Item = Result<Record, Error>>,
 {
     let mut functions = Functions::new();
     while let Some((key, start_line)) = eat_if_matches!(parser,

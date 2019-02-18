@@ -12,7 +12,6 @@
 
 extern crate failure;
 extern crate lcov;
-#[macro_use]
 extern crate structopt;
 
 use failure::Error;
@@ -56,7 +55,7 @@ fn main() {
     let opt = Opt::from_args();
     if let Err(e) = run(opt) {
         eprintln!("{}", e);
-        if let Some(bt) = e.cause().backtrace() {
+        if let Some(bt) = e.as_fail().backtrace() {
             eprintln!("{}", bt);
         }
         process::exit(1);

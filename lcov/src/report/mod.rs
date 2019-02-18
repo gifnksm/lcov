@@ -8,6 +8,7 @@ use self::parser::Parser;
 use self::section::Sections;
 use super::reader::Error as ReadError;
 use super::{Reader, Record, RecordKind};
+use failure::Error;
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -96,11 +97,12 @@ impl Report {
     /// # }
     /// # fn main() {}
     /// ```
-    pub fn from_reader<I, E>(iter: I) -> Result<Self, ParseError<E>>
+    pub fn from_reader<I, E>(iter: I) -> Result<Self, ParseError>
     where
         I: IntoIterator<Item = Result<Record, E>>,
+        E: Into<Error>,
     {
-        let mut parser = Parser::new(iter);
+        let mut parser = Parser::new(iter.into_iter().map(|item| item.map_err(Into::into)));
         let report = Report {
             sections: section::parse(&mut parser)?,
         };
@@ -123,12 +125,14 @@ impl Report {
     /// # }
     /// # fn main() {}
     /// ```
-    pub fn from_file<P>(path: P) -> Result<Self, ParseError<ReadError>>
+    pub fn from_file<P>(path: P) -> Result<Self, ParseError>
     where
         P: AsRef<Path>,
     {
         let reader = Reader::open_file(path)
+            .map_err(Into::into)
             .map_err(ReadError::Io)
+            .map_err(Into::into)
             .map_err(ParseError::Read)?;
         Self::from_reader(reader)
     }

@@ -1,3 +1,5 @@
+use failure::Error;
+
 macro_rules! eat {
     ($parser: expr, $p: pat) => {
         eat!($parser, $p => {})
@@ -46,16 +48,16 @@ impl<I, T> Parser<I, T> {
     }
 }
 
-impl<I, T, E> Parser<I, T>
+impl<I, T> Parser<I, T>
 where
-    I: Iterator<Item = Result<T, E>>,
+    I: Iterator<Item = Result<T, Error>>,
 {
     pub(crate) fn push(&mut self, item: T) {
         assert!(self.next_item.is_none());
         self.next_item = Some(item);
     }
 
-    pub(crate) fn pop(&mut self) -> Result<Option<T>, E> {
+    pub(crate) fn pop(&mut self) -> Result<Option<T>, Error> {
         if let Some(next) = self.next_item.take() {
             return Ok(Some(next));
         }
@@ -66,7 +68,7 @@ where
         }
     }
 
-    pub(crate) fn peek(&mut self) -> Result<Option<&T>, E> {
+    pub(crate) fn peek(&mut self) -> Result<Option<&T>, Error> {
         if let Some(ref next) = self.next_item {
             return Ok(Some(next));
         }
