@@ -16,7 +16,7 @@ failure = "0.1"
 [dev-dependencies]
 glob = "0.2"
 matches = "0.1"
-version-sync = "0.5"
+version-sync = "0.8"
 cargo-readme = "2.0"
 
 [badges]
