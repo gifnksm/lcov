@@ -1,8 +1,8 @@
 use super::RecordKind;
-use failure::{Error, Fail};
+use crate::reader;
 
 /// All possible errors that can occur when parsing LCOV records.
-#[derive(Debug, Fail)]
+#[derive(Debug, thiserror::Error)]
 pub enum ParseError {
     /// An error indicating that reading record operation failed.
     ///
@@ -18,8 +18,8 @@ pub enum ParseError {
     /// assert_matches!(Report::from_reader(Reader::new("FOO:1,2,3".as_bytes())), Err(ParseError::Read(_)));
     /// # }
     /// ```
-    #[fail(display = "failed to read record: {}", _0)]
-    Read(#[cause] Error),
+    #[error("failed to read record: {}", _0)]
+    Read(#[from] reader::Error),
 
     /// An error indicating that unexpected kind of record is read.
     ///
@@ -41,7 +41,7 @@ pub enum ParseError {
     ///                 Err(ParseError::UnexpectedRecord(RecordKind::TestName)));
     /// # }
     /// ```
-    #[fail(display = "unexpected record `{}`", _0)]
+    #[error("unexpected record `{}`", _0)]
     UnexpectedRecord(RecordKind),
 
     /// An error indicating that unexpected "end of file".
@@ -63,12 +63,12 @@ pub enum ParseError {
     ///                 Err(ParseError::UnexpectedEof));
     /// # }
     /// ```
-    #[fail(display = "unexpected end of file")]
+    #[error("unexpected end of file")]
     UnexpectedEof,
 }
 
 /// All possible errors that can occur when merging LCOV records.
-#[derive(Debug, Copy, Clone, Fail, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, thiserror::Error)]
 pub enum MergeError {
     /// An error indicating that start line of functions are not same.
     ///
@@ -78,8 +78,7 @@ pub enum MergeError {
     ///
     /// ```rust
     /// # use matches::assert_matches;
-    /// # use failure::Error;
-    /// # fn try_main() -> Result<(), Error> {
+    /// # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     /// use lcov::{Reader, Report};
     /// use lcov::report::MergeError;
     /// let input1 = "\
@@ -104,7 +103,7 @@ pub enum MergeError {
     /// # try_main().expect("failed to run test");
     /// # }
     /// ```
-    #[fail(display = "unmatched start line of function")]
+    #[error("unmatched start line of function")]
     UnmatchedFunctionLine,
 
     /// An error indicating that checksum of lines are not same.
@@ -115,8 +114,7 @@ pub enum MergeError {
     ///
     /// ```rust
     /// # use matches::assert_matches;
-    /// # use failure::Error;
-    /// # fn try_main() -> Result<(), Error> {
+    /// # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     /// use lcov::{Reader, Report};
     /// use lcov::report::MergeError;
     /// let input1 = "\
@@ -141,6 +139,6 @@ pub enum MergeError {
     /// # try_main().expect("failed to run test");
     /// # }
     /// ```
-    #[fail(display = "unmatched checksum")]
+    #[error("unmatched checksum")]
     UnmatchedChecksum,
 }

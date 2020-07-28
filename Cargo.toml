@@ -12,7 +12,6 @@ edition = "2018"
 
 [dependencies]
 lcov = { version = "0.5", path = "lcov" }
-failure = "0.1.8"
 structopt = "0.3.15"
 
 [badges]

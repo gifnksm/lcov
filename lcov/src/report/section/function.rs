@@ -3,8 +3,7 @@
 //! Some coverage information is stored in a [`Functions`] as `BTreeMap` .
 //!
 //! [`Functions`]: ./type.Functions.html
-use super::{Merge, MergeError, ParseError, Parser, Record};
-use failure::Error;
+use super::{Merge, MergeError, ParseError, Parser, ReadError, Record};
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -59,7 +58,7 @@ impl Merge for Value {
 
 pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Functions, ParseError>
 where
-    I: Iterator<Item = Result<Record, Error>>,
+    I: Iterator<Item = Result<Record, ReadError>>,
 {
     let mut functions = Functions::new();
     while let Some((key, start_line)) = eat_if_matches!(parser,

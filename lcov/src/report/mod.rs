@@ -8,7 +8,6 @@ use self::parser::Parser;
 use self::section::Sections;
 use super::reader::Error as ReadError;
 use super::{Reader, Record, RecordKind};
-use failure::Error;
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -28,10 +27,9 @@ pub mod section;
 /// Merges LCOV tracefiles and outputs the result in LCOV tracefile format:
 ///
 /// ```rust
-/// # use failure::Error;
 /// use lcov::Report;
 ///
-/// # fn foo() -> Result<(), Error> {
+/// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
 /// let mut report = Report::new();
 ///
 /// // Merges a first file.
@@ -73,10 +71,9 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::{Report, Reader};
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let input = "\
     /// TN:test_name
     /// SF:/path/to/source/file.rs
@@ -96,7 +93,7 @@ impl Report {
     pub fn from_reader<I, E>(iter: I) -> Result<Self, ParseError>
     where
         I: IntoIterator<Item = Result<Record, E>>,
-        E: Into<Error>,
+        E: Into<ReadError>,
     {
         let mut parser = Parser::new(iter.into_iter().map(|item| item.map_err(Into::into)));
         let report = Report {
@@ -110,10 +107,9 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Report;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let report = Report::from_file("report.info")?;
     /// # Ok(())
     /// # }
@@ -136,10 +132,9 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Report;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let mut report = Report::from_file("report1.info")?;
     /// report.merge(Report::from_file("report2.info")?)?;
     /// # Ok(())
@@ -155,10 +150,9 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Report;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let mut report = Report::from_file("report1.info")?;
     /// report.merge_lossy(Report::from_file("report2.info")?);
     /// # Ok(())
@@ -174,10 +168,9 @@ impl Report {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Report;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let mut report = Report::from_file("report.info")?;
     /// // ... Manipulate report
     /// for record in report.into_records() {

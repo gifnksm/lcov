@@ -18,14 +18,13 @@ use std::{mem, ops};
 /// # Examples
 ///
 /// ```rust
-/// # use failure::Error;
 /// use lcov::Report;
 /// use lcov::filter::{FilterMap, LineNum};
 /// use std::collections::HashMap;
 /// use std::path::PathBuf;
 /// use std::iter::FromIterator;
 ///
-/// # fn foo() -> Result<(), Error> {
+/// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
 /// // Creates a `Report` from file.
 /// let mut report = Report::from_file("report.info")?;
 ///
@@ -93,14 +92,13 @@ impl LineNum {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Report;
     /// use lcov::filter::{FilterMap, LineNum};
     /// use std::collections::HashMap;
     /// use std::path::PathBuf;
     /// use std::iter::FromIterator;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// // Creates a `Report` from file.
     /// let mut report = Report::from_file("report.info")?;
     ///

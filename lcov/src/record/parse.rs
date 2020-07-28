@@ -1,5 +1,4 @@
 use super::{Record, RecordKind};
-use failure::Fail;
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -35,7 +34,7 @@ impl FromStr for RecordKind {
 }
 
 /// All possible errors that can occur when parsing LCOV record.
-#[derive(Debug, Clone, Fail, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]
 pub enum ParseRecordError {
     /// An error indicating that the field of the record is not found in the input.
     ///
@@ -46,7 +45,7 @@ pub enum ParseRecordError {
     /// use lcov::record::ParseRecordError;
     /// assert_eq!("FNDA:3".parse::<Record>(), Err(ParseRecordError::FieldNotFound("name")));
     /// ```
-    #[fail(display = "field `{}` not found", _0)]
+    #[error("field `{}` not found", _0)]
     FieldNotFound(&'static str),
 
     /// An error indicating that the number of fields is larger than expected.
@@ -58,7 +57,7 @@ pub enum ParseRecordError {
     /// use lcov::record::ParseRecordError;
     /// assert_eq!("LF:1,2".parse::<Record>(), Err(ParseRecordError::TooManyFields));
     /// ```
-    #[fail(display = "too many fields found")]
+    #[error("too many fields found")]
     TooManyFields,
 
     /// An error indicating that parsing integer field failed.
@@ -73,8 +72,8 @@ pub enum ParseRecordError {
     /// assert_matches!("LH:foo".parse::<Record>(), Err(ParseRecordError::ParseIntError("hit", _)));
     /// # }
     /// ```
-    #[fail(display = "invalid value of field `{}`: {}", _0, _1)]
-    ParseIntError(&'static str, #[cause] ParseIntError),
+    #[error("invalid value of field `{}`: {}", _0, _1)]
+    ParseIntError(&'static str, #[source] ParseIntError),
 
     /// An error indicating that the unknown record is found in the input.
     ///
@@ -85,7 +84,7 @@ pub enum ParseRecordError {
     /// use lcov::record::ParseRecordError;
     /// assert_eq!("FOO:1,2".parse::<Record>(), Err(ParseRecordError::UnknownRecord));
     /// ```
-    #[fail(display = "unknown record")]
+    #[error("unknown record")]
     UnknownRecord,
 }
 
