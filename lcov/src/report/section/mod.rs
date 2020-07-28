@@ -74,7 +74,7 @@ where
 {
     let mut sections = Sections::new();
 
-    while let Some(_) = parser.peek().map_err(ParseError::Read)? {
+    while parser.peek().map_err(ParseError::Read)?.is_some() {
         // Sometimes, lcov emits TN: records multiple times, so skip the first TN: record.
         let mut test_name = None;
         while let Some(tn) = eat_if_matches!(parser, Record::TestName { name } => name) {

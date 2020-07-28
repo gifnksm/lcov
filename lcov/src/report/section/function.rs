@@ -39,7 +39,7 @@ impl Merge for Value {
         if let Some(start_line) = other.start_line.as_ref() {
             if let Some(my_start_line) = self.start_line.as_ref() {
                 if start_line != my_start_line {
-                    Err(MergeError::UnmatchedFunctionLine)?;
+                    return Err(MergeError::UnmatchedFunctionLine);
                 }
             }
         }

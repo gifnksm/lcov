@@ -39,7 +39,7 @@ impl Merge for Value {
         if let Some(checksum) = other.checksum.as_ref() {
             if let Some(my_checksum) = self.checksum.as_ref() {
                 if checksum != my_checksum {
-                    Err(MergeError::UnmatchedChecksum)?;
+                    return Err(MergeError::UnmatchedChecksum);
                 }
             }
         }

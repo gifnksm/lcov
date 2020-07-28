@@ -10,8 +10,6 @@
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
 
-use structopt;
-
 use lcov::Report;
 use std::path::PathBuf;
 use std::process;

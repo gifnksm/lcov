@@ -7,8 +7,8 @@ macro_rules! eat {
     ($parser: expr, $p: pat => $body: expr) => {
         match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => $body,
-            Some(rec) => Err(ParseError::UnexpectedRecord(rec.kind()))?,
-            None => Err(ParseError::UnexpectedEof)?,
+            Some(rec) => return Err(ParseError::UnexpectedRecord(rec.kind())),
+            None => return Err(ParseError::UnexpectedEof),
         }
     };
 }
