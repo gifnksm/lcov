@@ -15,7 +15,7 @@ rust:
 
 script:
   - |
-      cargo build --all &&
-      cargo test --all &&
-      cargo bench --all &&
-      cargo doc --no-deps --all
+      cargo build --workspace &&
+      cargo test --workspace &&
+      cargo bench --workspace &&
+      cargo doc --no-deps --workspace
