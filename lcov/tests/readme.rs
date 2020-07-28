@@ -13,6 +13,7 @@ fn test_readme_identical() {
         true,
         true,
         true,
+        true,
     )
     .expect("failed to generate readme");
     expected.push('\n');
