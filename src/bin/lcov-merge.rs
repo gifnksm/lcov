@@ -12,7 +12,6 @@
 
 use structopt;
 
-use failure::Error;
 use lcov::Report;
 use std::path::PathBuf;
 use std::process;
@@ -30,7 +29,7 @@ struct Opt {
     files: Vec<PathBuf>,
 }
 
-fn run(opt: Opt) -> Result<(), Error> {
+fn run(opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
     let mut merged_report = Report::new();
 
     for path in &opt.files {
@@ -53,9 +52,6 @@ fn main() {
     let opt = Opt::from_args();
     if let Err(e) = run(opt) {
         eprintln!("{}", e);
-        if let Some(bt) = e.as_fail().backtrace() {
-            eprintln!("{}", bt);
-        }
         process::exit(1);
     }
 }

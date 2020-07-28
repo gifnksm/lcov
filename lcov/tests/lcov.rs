@@ -1,4 +1,3 @@
-use failure::Error;
 use lcov::filter::{FilterMap, LineNum};
 use lcov::{Reader, Record, Report};
 use std::collections::HashMap;
@@ -9,6 +8,8 @@ use std::path::{Path, PathBuf};
 
 const FIXTURE_DIR: &str = "./tests/fixtures";
 const FIXTURE_GLOB: &str = "./tests/fixtures/*.info";
+
+type Error = Box<dyn std::error::Error>;
 
 fn open_fixture<P>(file: P) -> Result<Reader<BufReader<File>>, Error>
 where

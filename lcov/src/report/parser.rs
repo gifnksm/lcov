@@ -1,4 +1,4 @@
-use failure::Error;
+use super::ReadError;
 
 macro_rules! eat {
     ($parser: expr, $p: pat) => {
@@ -50,14 +50,14 @@ impl<I, T> Parser<I, T> {
 
 impl<I, T> Parser<I, T>
 where
-    I: Iterator<Item = Result<T, Error>>,
+    I: Iterator<Item = Result<T, ReadError>>,
 {
     pub(crate) fn push(&mut self, item: T) {
         assert!(self.next_item.is_none());
         self.next_item = Some(item);
     }
 
-    pub(crate) fn pop(&mut self) -> Result<Option<T>, Error> {
+    pub(crate) fn pop(&mut self) -> Result<Option<T>, ReadError> {
         if let Some(next) = self.next_item.take() {
             return Ok(Some(next));
         }
@@ -68,7 +68,7 @@ where
         }
     }
 
-    pub(crate) fn peek(&mut self) -> Result<Option<&T>, Error> {
+    pub(crate) fn peek(&mut self) -> Result<Option<&T>, ReadError> {
         if let Some(ref next) = self.next_item {
             return Ok(Some(next));
         }

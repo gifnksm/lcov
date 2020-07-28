@@ -40,8 +40,7 @@
 //! Parsing an LCOV tracefile:
 //!
 //! ```rust
-//! # use failure::Error;
-//! # fn try_main() -> Result<(), Error> {
+//! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 //! use lcov::{Record, RecordKind, Reader};
 //!
 //! // `Reader` is an iterator that iterates over `Result<lcov::Record, E>` read from the input buffer.
@@ -66,8 +65,7 @@
 //! Createing an LCOV report from `String`:
 //!
 //! ```rust
-//! # use failure::Error;
-//! # fn try_main() -> Result<(), Error> {
+//! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 //! use lcov::{Reader, Record};
 //!
 //! let input = "\
@@ -101,8 +99,7 @@
 //! Merging tracefiles:
 //!
 //! ```rust
-//! # use failure::Error;
-//! # fn try_main() -> Result<(), Error> {
+//! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 //! use lcov::{Record, RecordKind, Report};
 //!
 //! // Creates an empty `Report`.

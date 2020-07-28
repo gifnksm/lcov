@@ -8,7 +8,6 @@
 //! [`Reader`]: struct.Reader.html
 //! [`open_file`]: ../fn.open_file.html
 use super::record::{ParseRecordError, Record};
-use failure::Fail;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::Path;
@@ -26,12 +25,11 @@ impl<B> Reader<B> {
     /// # Examples
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use std::io::BufReader;
     /// use std::fs::File;
     /// use lcov::Reader;
     ///
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let input = "\
     /// TN:test_name
     /// SF:/path/to/source/file.rs
@@ -65,10 +63,9 @@ impl Reader<BufReader<File>> {
     /// # Example
     ///
     /// ```rust
-    /// # use failure::Error;
     /// use lcov::Reader;
     /// #
-    /// # fn foo() -> Result<(), Error> {
+    /// # fn foo() -> Result<(), Box<dyn std::error::Error>> {
     /// let reader = Reader::open_file("report.info")?;
     /// # Ok(())
     /// # }
@@ -83,13 +80,13 @@ impl Reader<BufReader<File>> {
 }
 
 /// All possible errors that can occur when reading LCOV tracefile.
-#[derive(Debug, Fail)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// An error indicating that I/O operation failed.
     ///
     /// This error occurs when the underlying reader returns an error.
-    #[fail(display = "{}", _0)]
-    Io(#[cause] io::Error),
+    #[error("{}", _0)]
+    Io(#[from] io::Error),
 
     /// An error indicating that record parsing failed.
     ///
@@ -105,8 +102,8 @@ pub enum Error {
     /// assert_matches!(reader.next(), Some(Err(ReadError::ParseRecord(1, ParseRecordError::UnknownRecord))));
     /// # }
     /// ```
-    #[fail(display = "invalid record syntax at line {}: {}", _0, _1)]
-    ParseRecord(u32, #[cause] ParseRecordError),
+    #[error("invalid record syntax at line {}: {}", _0, _1)]
+    ParseRecord(u32, #[source] ParseRecordError),
 }
 
 impl<B> Iterator for Reader<B>
