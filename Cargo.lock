@@ -97,7 +97,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "lcov"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "cargo-readme 3.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -108,9 +108,9 @@ dependencies = [
 
 [[package]]
 name = "lcov-util"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
- "lcov 0.5.0",
+ "lcov 0.6.0",
  "structopt 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
