@@ -87,7 +87,7 @@ where
     Ok(functions)
 }
 
-pub(crate) fn into_records(functions: Functions) -> Box<Iterator<Item = Record>> {
+pub(crate) fn into_records(functions: Functions) -> Box<dyn Iterator<Item = Record>> {
     if functions.is_empty() {
         return Box::new(iter::empty());
     }

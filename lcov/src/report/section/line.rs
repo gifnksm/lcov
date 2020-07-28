@@ -77,7 +77,7 @@ where
     Ok(lines)
 }
 
-pub(crate) fn into_records(lines: Lines) -> Box<Iterator<Item = Record>> {
+pub(crate) fn into_records(lines: Lines) -> Box<dyn Iterator<Item = Record>> {
     if lines.is_empty() {
         return Box::new(iter::empty());
     }

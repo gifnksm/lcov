@@ -144,7 +144,7 @@ impl FromStr for Record {
         use Record::*;
         use RecordKind as Kind;
 
-        s = s.trim_right_matches::<&[_]>(&['\n', '\r']);
+        s = s.trim_end_matches::<&[_]>(&['\n', '\r']);
         let mut sp = s.splitn(2, ':');
 
         let kind = sp

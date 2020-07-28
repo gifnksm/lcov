@@ -106,7 +106,7 @@ where
     Ok(sections)
 }
 
-pub(crate) fn into_records(sections: Sections) -> Box<Iterator<Item = Record>> {
+pub(crate) fn into_records(sections: Sections) -> Box<dyn Iterator<Item = Record>> {
     let iter = sections.into_iter().flat_map(|(key, value)| {
         let test_name = Record::TestName {
             name: key.test_name,

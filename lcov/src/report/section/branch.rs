@@ -70,7 +70,7 @@ where
     Ok(branches)
 }
 
-pub(crate) fn into_records(branches: Branches) -> Box<Iterator<Item = Record>> {
+pub(crate) fn into_records(branches: Branches) -> Box<dyn Iterator<Item = Record>> {
     if branches.is_empty() {
         return Box::new(iter::empty());
     }
