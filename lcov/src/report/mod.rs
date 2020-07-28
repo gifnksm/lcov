@@ -205,7 +205,7 @@ impl Report {
 /// [`into_records`]: struct.Report.html#method.into_records
 /// [`Report`]: struct.Report.html
 pub struct IntoRecords {
-    iter: Box<Iterator<Item = Record>>,
+    iter: Box<dyn Iterator<Item = Record>>,
 }
 
 impl fmt::Debug for IntoRecords {

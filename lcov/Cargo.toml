@@ -11,13 +11,13 @@ repository = "https://github.com/gifnksm/lcov/"
 edition = "2018"
 
 [dependencies]
-failure = "0.1"
+failure = "0.1.8"
 
 [dev-dependencies]
-glob = "0.2"
-matches = "0.1"
-version-sync = "0.8"
-cargo-readme = "2.0"
+glob = "0.3.0"
+matches = "0.1.8"
+version-sync = "0.9.1"
+cargo-readme = "3.2.0"
 
 [badges]
 travis-ci = { repository = "gifnksm/lcov", branch = "master" }
