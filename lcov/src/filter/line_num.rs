@@ -121,7 +121,7 @@ impl LineNum {
     /// # fn main() {}
     /// ```
     pub fn apply(&self, section: &mut section::Value) {
-        let mut functions = mem::replace(&mut section.functions, Default::default())
+        let mut functions = mem::take(&mut section.functions)
             .into_iter()
             .filter_map(|(key, value)| {
                 value

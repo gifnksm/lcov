@@ -26,7 +26,7 @@ impl FromStr for RecordKind {
             "LF" => LinesFound,
             "LH" => LinesHit,
             "end_of_record" => EndOfRecord,
-            _ => Err(ParseRecordKindError)?,
+            _ => return Err(ParseRecordKindError),
         };
 
         Ok(kind)

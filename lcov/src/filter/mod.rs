@@ -58,7 +58,7 @@ where
     where
         F: FnMut(Self::Item) -> Option<Self::Item>,
     {
-        let iter = mem::replace(self, T::default()).into_iter().filter_map(f);
+        let iter = mem::take(self).into_iter().filter_map(f);
         self.extend(iter);
     }
 }
