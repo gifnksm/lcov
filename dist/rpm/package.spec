@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Summary: %{_pkg_summary}
 Name: %{_pkg_name}
 Version: %{_pkg_version}
