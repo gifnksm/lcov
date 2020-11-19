@@ -24,7 +24,7 @@ which cargo
 cargo build --release
 
 %install
-cargo install --root ${RPM_BUILD_ROOT}/usr --path .
+cargo install --no-track --locked --root ${RPM_BUILD_ROOT}/usr --path .
 rm ${RPM_BUILD_ROOT}/usr/.crates.toml
 
 %files
