@@ -3,7 +3,7 @@
 //! Some coverage information is stored in a [`Lines`] as `BTreeMap` .
 //!
 //! [`Lines`]: ./type.Linesh.html
-use super::{Merge, MergeError, ParseError, Parser, ReadError, Record};
+use super::{Merge, MergeError, Record};
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -54,26 +54,6 @@ impl Merge for Value {
         }
         self.count += other.count;
     }
-}
-
-pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Lines, ParseError>
-where
-    I: Iterator<Item = Result<Record, ReadError>>,
-{
-    let mut lines = Lines::new();
-
-    while let Some((line, count, checksum)) = eat_if_matches!(parser,
-        Record::LineData { line, count, checksum } => {
-            (line, count, checksum)
-        }
-    ) {
-        let _ = lines.insert(Key { line }, Value { count, checksum });
-    }
-
-    let _ = eat_if_matches!(parser, Record::LinesFound { .. });
-    let _ = eat_if_matches!(parser, Record::LinesHit { .. });
-
-    Ok(lines)
 }
 
 pub(crate) fn into_records(lines: Lines) -> Box<dyn Iterator<Item = Record>> {

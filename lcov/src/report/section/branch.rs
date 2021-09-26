@@ -3,7 +3,7 @@
 //! Some coverage information is stored in a [`Branches`] as `BTreeMap` .
 //!
 //! [`Branches`]: ./type.Branches.html
-use super::{Merge, MergeError, ParseError, Parser, ReadError, Record};
+use super::{Merge, MergeError, Record};
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -47,26 +47,6 @@ impl Merge for Value {
             self.taken = Some(self.taken.unwrap_or(0) + taken);
         }
     }
-}
-
-pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Branches, ParseError>
-where
-    I: Iterator<Item = Result<Record, ReadError>>,
-{
-    let mut branches = Branches::new();
-
-    while let Some((key, value)) = eat_if_matches!(parser,
-        Record::BranchData { line, block, branch, taken } => {
-            (Key { line, block, branch }, Value { taken })
-        }
-    ) {
-        let _ = branches.insert(key, value);
-    }
-
-    let _ = eat_if_matches!(parser, Record::BranchesFound { .. });
-    let _ = eat_if_matches!(parser, Record::BranchesHit { .. });
-
-    Ok(branches)
 }
 
 pub(crate) fn into_records(branches: Branches) -> Box<dyn Iterator<Item = Record>> {

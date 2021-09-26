@@ -3,7 +3,7 @@
 //! Some coverage information is stored in a [`Functions`] as `BTreeMap` .
 //!
 //! [`Functions`]: ./type.Functions.html
-use super::{Merge, MergeError, ParseError, Parser, ReadError, Record};
+use super::{Merge, MergeError, Record};
 use std::collections::BTreeMap;
 use std::iter;
 
@@ -54,36 +54,6 @@ impl Merge for Value {
         }
         self.count = u64::saturating_add(self.count, other.count);
     }
-}
-
-pub(crate) fn parse<I>(parser: &mut Parser<I, Record>) -> Result<Functions, ParseError>
-where
-    I: Iterator<Item = Result<Record, ReadError>>,
-{
-    let mut functions = Functions::new();
-    while let Some((key, start_line)) = eat_if_matches!(parser,
-        Record::FunctionName { name, start_line } => (Key { name }, start_line)
-    ) {
-        let _ = functions.insert(
-            key,
-            Value {
-                start_line: Some(start_line),
-                count: 0,
-            },
-        );
-    }
-
-    while let Some((key, count)) = eat_if_matches!(parser,
-        Record::FunctionData { name, count } => (Key { name }, count)
-    ) {
-        let data = functions.entry(key).or_insert_with(Value::default);
-        data.count += count;
-    }
-
-    let _ = eat_if_matches!(parser, Record::FunctionsFound { .. });
-    let _ = eat_if_matches!(parser, Record::FunctionsHit { .. });
-
-    Ok(functions)
 }
 
 pub(crate) fn into_records(functions: Functions) -> Box<dyn Iterator<Item = Record>> {

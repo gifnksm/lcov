@@ -1,18 +1,5 @@
 use super::ReadError;
 
-macro_rules! eat {
-    ($parser: expr, $p: pat, $expected: expr) => {
-        eat!($parser, $p => {}, $expected)
-    };
-    ($parser: expr, $p: pat => $body: expr, $expected: expr) => {
-        match $parser.pop().map_err(ParseError::Read)? {
-            Some($p) => $body,
-            Some(rec) => return Err(ParseError::UnexpectedRecord { found: rec.kind(), expected: $expected }),
-            None => return Err(ParseError::UnexpectedEof),
-        }
-    };
-}
-
 macro_rules! eat_if_matches {
     ($parser: expr, $p: pat) => {
         eat_if_matches!($parser, $p => {})

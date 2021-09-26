@@ -85,21 +85,79 @@ where
             break;
         }
 
+        let mut source_file = None;
+        let mut functions = Functions::default();
+        let mut branches = Branches::default();
+        let mut lines = Lines::default();
+
+        loop {
+            match parser.pop()?.ok_or(ParseError::UnexpectedEof)? {
+                rec @ Record::TestName { .. } => {
+                    return Err(ParseError::UnexpectedRecord {
+                        expected: RecordKind::EndOfRecord,
+                        found: rec.kind(),
+                    })
+                }
+                Record::SourceFile { path } => source_file = Some(path),
+                Record::FunctionName { name, start_line } => {
+                    let _ = functions.insert(
+                        function::Key { name },
+                        function::Value {
+                            start_line: Some(start_line),
+                            count: 0,
+                        },
+                    );
+                }
+                Record::FunctionData { name, count } => {
+                    let data = functions.entry(function::Key { name }).or_default();
+                    data.count += count;
+                }
+                Record::FunctionsFound { .. } => {} // ignore
+                Record::FunctionsHit { .. } => {}   // ignore
+                Record::BranchData {
+                    line,
+                    block,
+                    branch,
+                    taken,
+                } => {
+                    let _ = branches.insert(
+                        branch::Key {
+                            line,
+                            block,
+                            branch,
+                        },
+                        branch::Value { taken },
+                    );
+                }
+                Record::BranchesFound { .. } => {} // ignore
+                Record::BranchesHit { .. } => {}   // ignore
+                Record::LineData {
+                    line,
+                    count,
+                    checksum,
+                } => {
+                    let _ = lines.insert(line::Key { line }, line::Value { count, checksum });
+                }
+                Record::LinesFound { .. } => {} // ignore
+                Record::LinesHit { .. } => {}   // ignore
+                Record::EndOfRecord => break,
+            }
+        }
+
         let key = Key {
             test_name: test_name.unwrap_or_else(String::new),
-            source_file: eat!(parser, Record::SourceFile { path } => path, RecordKind::SourceFile),
+            source_file: source_file.unwrap_or_else(PathBuf::new),
         };
         let value = Value {
-            functions: function::parse(parser)?,
-            branches: branch::parse(parser)?,
-            lines: line::parse(parser)?,
+            functions,
+            branches,
+            lines,
         };
         // If the new section contains no data, ignore it.
         // LCOV merge (`lcov -c -a XXX`) behaves the same way.
         if !value.is_empty() {
             let _ = sections.insert(key, value);
         }
-        eat!(parser, Record::EndOfRecord, RecordKind::EndOfRecord);
     }
 
     Ok(sections)
