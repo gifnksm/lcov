@@ -1,6 +1,6 @@
 TARGET_DIR = target
 LCOV_DIR = $(shell readlink -f lcov)
-PROFILE_DIR = $(LCOV_DIR)/test/profiles
+PROFILE_DIR = $(LCOV_DIR)/tests/profiles
 
 TRACEFILE_NAME=full.info part1.info part2.info target.info zero.info
 TRACEFILE_small=$(patsubst %,$(TARGET_DIR)/tracefiles/small/%,$(TRACEFILE_NAME))
@@ -11,6 +11,8 @@ PROFILE=
 
 all:
 .PHONY: all
+
+all: run-small run-medium run-large
 
 clean:
 	$(RM) -r $(TARGET_DIR)
@@ -27,7 +29,7 @@ gen-tracefile: $(TARGET_DIR)/tracefiles/$(PROFILE)/.generated
 .PHONY: gen-tracefile
 $(TARGET_DIR)/tracefiles/%/.generated: $(PROFILE_DIR)/% | $(TARGET_DIR)/tracefiles/%/
 	if [ -z "$(PROFILE)" ]; then echo "PROFILE is not specified"  ; exit 1; fi
-	cd $(TARGET_DIR)/tracefiles/$(PROFILE) && $(LCOV_DIR)/test/bin/mkinfo "$(PROFILE_DIR)/$(PROFILE)" -o src
+	cd $(TARGET_DIR)/tracefiles/$(PROFILE) && $(LCOV_DIR)/tests/bin/mkinfo "$(PROFILE_DIR)/$(PROFILE)" -o src
 	touch $@
 
 measure-lcov-master: $(TARGET_DIR)/results/$(PROFILE)/lcov-master
