@@ -6,7 +6,7 @@
 use self::branch::Branches;
 use self::function::Functions;
 use self::line::Lines;
-use super::{Merge, MergeError, ParseError, Parser, ReadError, Record};
+use super::{Merge, MergeError, ParseError, Parser, ReadError, Record, RecordKind};
 use std::collections::BTreeMap;
 use std::iter;
 use std::path::PathBuf;
@@ -87,7 +87,7 @@ where
 
         let key = Key {
             test_name: test_name.unwrap_or_else(String::new),
-            source_file: eat!(parser, Record::SourceFile { path } => path),
+            source_file: eat!(parser, Record::SourceFile { path } => path, RecordKind::SourceFile),
         };
         let value = Value {
             functions: function::parse(parser)?,
@@ -99,7 +99,7 @@ where
         if !value.is_empty() {
             let _ = sections.insert(key, value);
         }
-        eat!(parser, Record::EndOfRecord);
+        eat!(parser, Record::EndOfRecord, RecordKind::EndOfRecord);
     }
 
     Ok(sections)

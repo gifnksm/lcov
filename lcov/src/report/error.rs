@@ -38,11 +38,16 @@ pub enum ParseError {
     /// TN:next_test
     /// ";
     /// assert_matches!(Report::from_reader(Reader::new(input.as_bytes())),
-    ///                 Err(ParseError::UnexpectedRecord(RecordKind::TestName)));
+    ///                 Err(ParseError::UnexpectedRecord { found: RecordKind::TestName, expected: RecordKind::EndOfRecord }));
     /// # }
     /// ```
-    #[error("unexpected record `{}`", _0)]
-    UnexpectedRecord(RecordKind),
+    #[error("unexpected record found `{}`, expected `{}`", found, expected)]
+    UnexpectedRecord {
+        /// found record kind
+        found: RecordKind,
+        /// expected record kind
+        expected: RecordKind,
+    },
 
     /// An error indicating that unexpected "end of file".
     ///

@@ -1,13 +1,13 @@
 use super::ReadError;
 
 macro_rules! eat {
-    ($parser: expr, $p: pat) => {
-        eat!($parser, $p => {})
+    ($parser: expr, $p: pat, $expected: expr) => {
+        eat!($parser, $p => {}, $expected)
     };
-    ($parser: expr, $p: pat => $body: expr) => {
+    ($parser: expr, $p: pat => $body: expr, $expected: expr) => {
         match $parser.pop().map_err(ParseError::Read)? {
             Some($p) => $body,
-            Some(rec) => return Err(ParseError::UnexpectedRecord(rec.kind())),
+            Some(rec) => return Err(ParseError::UnexpectedRecord { found: rec.kind(), expected: $expected }),
             None => return Err(ParseError::UnexpectedEof),
         }
     };
