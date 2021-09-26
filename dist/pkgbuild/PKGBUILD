@@ -1,7 +1,7 @@
 # Maintainer: NAKASHIMA, Makoto <makoto.nksm@gmail.com>
 
 pkgname=lcov-util
-pkgver=0.1.5
+pkgver=0.1.6
 pkgrel=1
 pkgdesc="Utility commands to operate and analyze LCOV trace file at blazingly fast."
 url="https://github.com/gifnksm/lcov/"

@@ -1,6 +1,6 @@
 [package]
 name = "lcov-util"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
 description = "Utility commands to operate and analyze LCOV trace file at blazingly fast."
 readme = "README.md"
@@ -11,7 +11,7 @@ repository = "https://github.com/gifnksm/lcov/"
 edition = "2018"
 
 [dependencies]
-lcov = { version = "0.6", path = "lcov" }
+lcov = { version = "0.7", path = "lcov" }
 structopt = "0.3.23"
 
 [badges]
