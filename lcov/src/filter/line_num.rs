@@ -177,7 +177,7 @@ impl LineNum {
     }
 
     fn normalize(&mut self) {
-        let mut iter = mem::replace(&mut self.start2end, BTreeMap::new())
+        let mut iter = mem::take(&mut self.start2end)
             .into_iter()
             .map(|(start, end)| Range::new(start, end));
         let mut cur_range = match iter.next() {
