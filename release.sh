@@ -24,5 +24,5 @@ case "$yn" in
 esac
 
 cargo publish
-GIT_COMMITTER_DATE=$(git log -n1 --pretty=%aD) git tag -a -m "Release ${PKG_NAME} v${PKG_VERSION}" "${PKG_NAME}v${PKG_VERSION}"
+GIT_COMMITTER_DATE=$(git log -n1 --pretty=%aD) git tag -a -m "Release ${PKG_NAME} v${PKG_VERSION}" "${PKG_NAME}_v${PKG_VERSION}"
 git push --tags
