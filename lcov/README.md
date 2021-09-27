@@ -2,7 +2,8 @@
 
 [![Crates.io](https://img.shields.io/crates/v/lcov.svg)](https://crates.io/crates/lcov)
 [![Docs.rs](https://docs.rs/lcov/badge.svg)](https://docs.rs/lcov/)
-[![Travis CI Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
+[![CI](https://github.com/gifnksm/lcov/workflows/Continuous%20Integration/badge.svg)](https://github.com/gifnksm/lcov/actions)
+[![Coverage Status](https://coveralls.io/repos/github/gifnksm/lcov/badge.svg?branch=master)](https://coveralls.io/github/gifnksm/lcov?branch=master)
 ![LICENSE](https://img.shields.io/crates/l/lcov.svg)
 
 LCOV tracefile parser/merger/filter in pure Rust.

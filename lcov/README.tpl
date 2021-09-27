@@ -2,7 +2,8 @@
 
 [![Crates.io](https://img.shields.io/crates/v/{{crate}}.svg)](https://crates.io/crates/{{crate}})
 [![Docs.rs](https://docs.rs/{{crate}}/badge.svg)](https://docs.rs/{{crate}}/)
-[![Travis CI Build Status](https://travis-ci.org/gifnksm/lcov.svg?branch=master)](https://travis-ci.org/gifnksm/lcov)
+[![CI](https://github.com/gifnksm/lcov/workflows/Continuous%20Integration/badge.svg)](https://github.com/gifnksm/lcov/actions)
+[![Coverage Status](https://coveralls.io/repos/github/gifnksm/lcov/badge.svg?branch=master)](https://coveralls.io/github/gifnksm/lcov?branch=master)
 ![LICENSE](https://img.shields.io/crates/l/{{crate}}.svg)
 
 {{readme}}
