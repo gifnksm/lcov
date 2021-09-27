@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/{{crate}}.svg)](https://crates.io/crates/{{crate}})
 [![Docs.rs](https://docs.rs/{{crate}}/badge.svg)](https://docs.rs/{{crate}}/)
 [![CI](https://github.com/gifnksm/lcov/workflows/Continuous%20Integration/badge.svg)](https://github.com/gifnksm/lcov/actions)
-[![Coverage Status](https://coveralls.io/repos/github/gifnksm/lcov/badge.svg?branch=master)](https://coveralls.io/github/gifnksm/lcov?branch=master)
+[![codecov](https://codecov.io/gh/gifnksm/lcov/branch/master/graph/badge.svg?token=uXsi5eu0RD)](https://codecov.io/gh/gifnksm/lcov)
 ![LICENSE](https://img.shields.io/crates/l/{{crate}}.svg)
 
 {{readme}}
