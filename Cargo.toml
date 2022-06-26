@@ -1,3 +1,6 @@
+[workspace]
+members = ["lcov"]
+
 [package]
 name = "lcov-util"
 version = "0.1.8"
@@ -14,5 +17,5 @@ edition = "2018"
 lcov = { version = "0.7", path = "lcov" }
 structopt = "0.3.23"
 
-[workspace]
-members = ["lcov"]
+[dev-dependencies]
+version-sync = "0.9.4"

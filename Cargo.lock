@@ -135,6 +135,7 @@ version = "0.1.8"
 dependencies = [
  "lcov",
  "structopt",
+ "version-sync",
 ]
 
 [[package]]

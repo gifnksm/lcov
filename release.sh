@@ -2,19 +2,14 @@
 
 cd "$(dirname "$(readlink -f "$0")")"
 
-PKG_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)"
-PKG_NAME="$(sed -n 's/^name = "\(.*\)"/\1/p' Cargo.toml)"
-
-if ! grep "pkgver=${PKG_VERSION}" dist/pkgbuild/PKGBUILD >/dev/null; then
-  echo package version mismatch: dist/pkgbuild/PKGBUILD >&2
-  exit 1
-fi
-
 cargo build --workspace
 cargo test --workspace
 cargo doc --workspace
 
 cargo package
+
+PKG_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)"
+PKG_NAME="$(sed -n 's/^name = "\(.*\)"/\1/p' Cargo.toml)"
 
 echo "PKG: ${PKG_NAME}_v${PKG_VERSION}"
 
