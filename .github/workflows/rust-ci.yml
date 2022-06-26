@@ -2,6 +2,9 @@ name: Rust CI
 
 on: push
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   rustfmt_check:
     runs-on: ubuntu-latest
@@ -10,7 +13,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
-            components: clippy
+            profile: minimal
+            components: rustfmt
             override: true
       - name: rustfmt-check
         run: cargo fmt --all --check
@@ -37,6 +41,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
+            profile: minimal
             components: clippy
             override: true
       - name: Run clippy manually without annotations
@@ -58,7 +63,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
-            components: clippy
+            profile: minimal
             override: true
       - name: cargo test
         run: cargo test --workspace --all-targets --all-features
@@ -70,7 +75,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
-            components: clippy
+            profile: minimal
             override: true
       - name: cargo build
         run: cargo build --workspace --all-targets --all-features
