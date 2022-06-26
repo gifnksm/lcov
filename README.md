@@ -1,7 +1,7 @@
 # lcov-util
 
 [![Crates.io](https://img.shields.io/crates/v/lcov-util.svg)](https://crates.io/crates/lcov-util)
-[![CI](https://github.com/gifnksm/lcov/workflows/Continuous%20Integration/badge.svg)](https://github.com/gifnksm/lcov/actions)
+[![Rust CI](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml)
 [![codecov](https://codecov.io/gh/gifnksm/lcov/branch/master/graph/badge.svg?token=uXsi5eu0RD)](https://codecov.io/gh/gifnksm/lcov)
 ![LICENSE](https://img.shields.io/crates/l/lcov-util.svg)
 
