@@ -145,8 +145,8 @@ where
         }
 
         let key = Key {
-            test_name: test_name.unwrap_or_else(String::new),
-            source_file: source_file.unwrap_or_else(PathBuf::new),
+            test_name: test_name.unwrap_or_default(),
+            source_file: source_file.unwrap_or_default(),
         };
         let value = Value {
             functions,
