@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 
-cd "$(dirname $(readlink -f $0))"
+cd "$(dirname "$(readlink -f "$0")")"
 
 cargo build --workspace
 cargo test --workspace
@@ -16,11 +16,11 @@ echo "PKG: ${PKG_NAME}_v${PKG_VERSION}"
 read -n1 -p "ok? (y/N): " yn
 echo
 case "$yn" in
-    [yY]*) ;;
-    *)
-        echo "cancelled" >&2
-        exit 1
-        ;;
+[yY]*) ;;
+*)
+  echo "cancelled" >&2
+  exit 1
+  ;;
 esac
 
 GIT_COMMITTER_DATE=$(git log -n1 --pretty=%aD) git tag -a -m "Release ${PKG_NAME} v${PKG_VERSION}" "${PKG_NAME}_v${PKG_VERSION}"
