@@ -18,6 +18,3 @@ glob = "0.3.0"
 matches = "0.1.9"
 version-sync = "0.9.3"
 cargo-readme = "3.2.0"
-
-[badges]
-travis-ci = { repository = "gifnksm/lcov", branch = "master" }
