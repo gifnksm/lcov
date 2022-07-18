@@ -7,6 +7,7 @@ env:
 
 jobs:
   rustfmt_check:
+    name: Rustfmt Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,6 +21,7 @@ jobs:
         run: cargo fmt --all --check
 
   clippy_check:
+    name: Clippy Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -49,6 +51,7 @@ jobs:
         run: cargo clippy --all-features --all-targets -- -D warnings
 
   security_audit:
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -57,24 +60,36 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
+    name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - 1.56.1
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-            toolchain: stable
+            toolchain: ${{ matrix.rust }}
             profile: minimal
             override: true
       - name: cargo test
         run: cargo test --workspace --all-targets --all-features
 
   build:
+    name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - 1.56.1
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-            toolchain: stable
+            toolchain: ${{ matrix.rust }}
             profile: minimal
             override: true
       - name: cargo build
