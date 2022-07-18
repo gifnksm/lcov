@@ -11,6 +11,9 @@ categories = ["parsing"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/gifnksm/lcov/"
 
+[badges]
+maintenance = { status = "passively-maintained" }
+
 [dependencies]
 thiserror = "1.0.31"
 

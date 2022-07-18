@@ -1,5 +1,6 @@
 # lcov
 
+[![maintenance status: passively-maintained](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
 [![license](https://img.shields.io/crates/l/lcov.svg)](#license)
 [![crates.io](https://img.shields.io/crates/v/lcov.svg)](https://crates.io/crates/lcov)
 [![docs.rs](https://docs.rs/lcov/badge.svg)](https://docs.rs/lcov/)
