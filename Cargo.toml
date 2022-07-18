@@ -15,7 +15,7 @@ edition = "2018"
 
 [dependencies]
 lcov = { version = "0.7", path = "lcov" }
-structopt = "0.3.23"
+structopt = "0.3.26"
 
 [dev-dependencies]
 version-sync = "0.9.4"
