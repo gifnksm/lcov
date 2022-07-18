@@ -2,6 +2,7 @@
 name = "lcov"
 version = "0.7.2"
 edition = "2021"
+rust-version = "1.56.1"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
 description = "LCOV tracefile parser/merger/filter in pure Rust."
 readme = "README.md"
