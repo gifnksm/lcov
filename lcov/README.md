@@ -34,7 +34,7 @@ In this crate, the data structure corresponding to each line of the LCOV tracefi
 Each line of the LCOV tracefile is composed of a string representing a kind of the record,
 a colon, a comma-separated field list:
 
-```
+```lcov
 <KIND>:<field#0>,<field#1>,...<field#N>
 ```
 
@@ -64,7 +64,7 @@ for record in records {
 }
 ```
 
-Createing an LCOV report from `String`:
+Creating an LCOV report from `String`:
 
 ```rust
 use lcov::{Reader, Record};
