@@ -22,7 +22,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-lcov = "0.8.0"
+lcov = "0.8.1"
 ```
 
 ## Performance
