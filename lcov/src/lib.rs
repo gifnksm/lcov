@@ -12,7 +12,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! lcov = "0.7"
+//! lcov = "0.8.0"
 //! ```
 //!
 //! # Performance
@@ -139,7 +139,7 @@
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
-#![doc(html_root_url = "https://docs.rs/lcov/0.7.2")]
+#![doc(html_root_url = "https://docs.rs/lcov/0.8.0")]
 
 pub use reader::Reader;
 pub use record::{Record, RecordKind};
