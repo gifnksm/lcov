@@ -24,5 +24,6 @@ cargo-readme = "3.2.0"
 pre-release-replacements = [
     { file = "README.md", search = "lcov = \"[0-9\\.]+\"", replace = "{{crate_name}} = \"{{version}}\"" },
     { file = "src/lib.rs", search = "^//! lcov = \"[0-9\\.]+\"", replace = "//! lcov = \"{{version}}\"" },
+    { file = "src/lib.rs", search = "^#!\\[doc\\(html_root_url = \"https://docs.rs/lcov/[0-9\\.]+\"\\)\\]", replace = "#![doc(html_root_url = \"https://docs.rs/lcov/{{version}}\")]" },
 ]
 pre-release-hook = ["cargo", "test"]
