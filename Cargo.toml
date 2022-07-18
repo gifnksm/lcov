@@ -3,7 +3,7 @@ members = ["lcov"]
 
 [package]
 name = "lcov-util"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.56.1"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
