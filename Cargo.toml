@@ -20,3 +20,10 @@ structopt = "0.3.26"
 
 [dev-dependencies]
 version-sync = "0.9.4"
+
+[package.metadata.release]
+pre-release-replacements = [
+    { file = "dist/pkgbuild/PKGBUILD", search = "pkgver=[0-9\\.]+", replace = "pkgver={{version}}" },
+    { file = "dist/pkgbuild/PKGBUILD", search = "pkgrel=[0-9\\.]+", replace = "pkgrel=1" },
+]
+pre-release-hook = ["cargo", "test", "--workspace"]
