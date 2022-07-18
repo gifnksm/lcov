@@ -26,7 +26,7 @@
 //! Each line of the LCOV tracefile is composed of a string representing a kind of the record,
 //! a colon, a comma-separated field list:
 //!
-//! ```text
+//! ```lcov
 //! <KIND>:<field#0>,<field#1>,...<field#N>
 //! ```
 //!
@@ -62,7 +62,7 @@
 //! # }
 //! ```
 //!
-//! Createing an LCOV report from `String`:
+//! Creating an LCOV report from `String`:
 //!
 //! ```rust
 //! # fn try_main() -> Result<(), Box<dyn std::error::Error>> {
