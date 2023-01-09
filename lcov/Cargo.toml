@@ -2,7 +2,7 @@
 name = "lcov"
 version = "0.8.1"
 edition = "2021"
-rust-version = "1.56.1"
+rust-version = "1.60.0"
 authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
 description = "LCOV tracefile parser/merger/filter in pure Rust."
 readme = "README.md"
@@ -15,10 +15,10 @@ repository = "https://github.com/gifnksm/lcov/"
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-thiserror = "1.0.37"
+thiserror = "1.0.38"
 
 [dev-dependencies]
-glob = "0.3.0"
+glob = "0.3.1"
 matches = "0.1.9"
 version-sync = "0.9.4"
 cargo-readme = "3.2.0"
