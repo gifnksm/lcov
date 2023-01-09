@@ -10,20 +10,20 @@
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
 
+use clap::Parser;
 use lcov::Report;
 use std::path::PathBuf;
 use std::process;
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
-#[structopt(about = "Merges LCOV tracefiles")]
+#[derive(Debug, clap::Parser)]
+#[clap(about = "Merges LCOV tracefiles")]
 struct Opt {
     /// Disables varidation such as checksum checking
     #[structopt(long = "loose")]
     loose: bool,
 
     /// LCOV tracefiles to merge
-    #[structopt(name = "FILE", parse(from_os_str))]
+    #[structopt(name = "FILE")]
     files: Vec<PathBuf>,
 }
 
@@ -47,7 +47,7 @@ fn run(opt: Opt) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     if let Err(e) = run(opt) {
         eprintln!("{}", e);
         process::exit(1);
