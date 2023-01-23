@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/crates/l/lcov.svg)](#license)
 [![crates.io](https://img.shields.io/crates/v/lcov.svg)](https://crates.io/crates/lcov)
 [![docs.rs](https://docs.rs/lcov/badge.svg)](https://docs.rs/lcov/)
-[![rust 1.60.0+ badge](https://img.shields.io/badge/rust-1.60.0+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
+[![rust 1.64.0+ badge](https://img.shields.io/badge/rust-1.64.0+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
 [![Rust CI](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml)
 [![codecov](https://codecov.io/gh/gifnksm/lcov/branch/master/graph/badge.svg?token=uXsi5eu0RD)](https://codecov.io/gh/gifnksm/lcov)
 
@@ -12,7 +12,7 @@
 
 ## Minimum supported Rust version (MSRV)
 
-The minimum supported Rust version is **Rust 1.60.0**.
+The minimum supported Rust version is **Rust 1.64.0**.
 At least the last 3 versions of stable Rust are supported at any given time.
 
 While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
