@@ -19,7 +19,7 @@ thiserror = "1.0.38"
 
 [dev-dependencies]
 glob = "0.3.1"
-matches = "0.1.9"
+matches = "0.1.10"
 version-sync = "0.9.4"
 cargo-readme = "3.2.0"
 
