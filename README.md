@@ -3,7 +3,7 @@
 [![maintenance status: passively-maintained](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
 [![license](https://img.shields.io/crates/l/lcov-util.svg)](#license)
 [![crates.io](https://img.shields.io/crates/v/lcov-util.svg)](https://crates.io/crates/lcov-util)
-[![rust 1.50.0+ badge](https://img.shields.io/badge/rust-1.50.0+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
+[![rust 1.64.0+ badge](https://img.shields.io/badge/rust-1.64.0+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
 [![Rust CI](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/gifnksm/lcov/actions/workflows/rust-ci.yml)
 [![codecov](https://codecov.io/gh/gifnksm/lcov/branch/master/graph/badge.svg?token=uXsi5eu0RD)](https://codecov.io/gh/gifnksm/lcov)
 
@@ -58,7 +58,7 @@ See [`benchsuite`](benchsuite) directory for details.
 
 ## Minimum supported Rust version (MSRV)
 
-The minimum supported Rust version is **Rust 1.60.0**.
+The minimum supported Rust version is **Rust 1.64.0**.
 At least the last 3 versions of stable Rust are supported at any given time.
 
 While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
