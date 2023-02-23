@@ -63,7 +63,7 @@ pub(crate) fn into_records(functions: Functions) -> Box<dyn Iterator<Item = Reco
 
     let found = functions.len() as u32;
     let mut functions = functions.into_iter().collect::<Vec<_>>();
-    functions.sort_by_key(|&(_, ref data)| data.start_line);
+    functions.sort_by_key(|(_, data)| data.start_line);
 
     enum Func {
         Line(String, u32),
