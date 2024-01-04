@@ -3,7 +3,6 @@
 //! The [`Record`] structure represents all kinds of LCOV records.
 //!
 //! [`Record`]: enum.Record.html
-pub use self::display::*;
 pub use self::parse::*;
 use std::path::PathBuf;
 
