@@ -131,7 +131,7 @@ impl LineNum {
             .collect::<Vec<_>>();
         functions.sort_by_key(|&(start_line, _, _, _)| start_line);
         {
-            let mut end = u32::max_value();
+            let mut end = u32::MAX;
             for data in functions.iter_mut().rev() {
                 data.1 = end;
                 end = u32::saturating_sub(data.0, 1);
@@ -250,7 +250,7 @@ impl From<ops::Range<u32>> for Range {
 
 impl From<ops::RangeFrom<u32>> for Range {
     fn from(range: ops::RangeFrom<u32>) -> Self {
-        Range::new(range.start, u32::max_value())
+        Range::new(range.start, u32::MAX)
     }
 }
 
@@ -262,7 +262,7 @@ impl From<ops::RangeTo<u32>> for Range {
 
 impl From<ops::RangeFull> for Range {
     fn from(_: ops::RangeFull) -> Self {
-        Range::new(0, u32::max_value())
+        Range::new(0, u32::MAX)
     }
 }
 
@@ -317,7 +317,7 @@ mod tests {
             assert_eq!(Some(range1), range1.join(range1));
             assert_eq!(Some(range2), range2.join(range2));
         }
-        let max = u32::max_value();
+        let max = u32::MAX;
         check(Some((0, 3)), (0, 1), (1, 3));
         check(Some((0, 3)), (0, 1), (2, 3));
         check(Some((0, 3)), (0, 2), (1, 3));
