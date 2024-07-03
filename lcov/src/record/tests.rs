@@ -66,7 +66,7 @@ fn functions_found_hit() {
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u32::max_value());
+    check_ok(u32::MAX);
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn branches_found_hit() {
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u32::max_value());
+    check_ok(u32::MAX);
 }
 
 #[test]
@@ -120,12 +120,8 @@ fn line_data() {
         );
     }
     check_ok(10, 20, None);
-    check_ok(u32::max_value(), u64::max_value(), Some("hogehoge".into()));
-    check_ok(
-        u32::max_value(),
-        u64::max_value(),
-        Some("foo,bar,baz".into()),
-    );
+    check_ok(u32::MAX, u64::MAX, Some("hogehoge".into()));
+    check_ok(u32::MAX, u64::MAX, Some("foo,bar,baz".into()));
 }
 
 #[test]
@@ -136,7 +132,7 @@ fn lines_found_hit() {
     }
     check_ok(0);
     check_ok(100);
-    check_ok(u32::max_value());
+    check_ok(u32::MAX);
 }
 
 #[test]

@@ -118,11 +118,12 @@ fn line_filter() {
         let mut filter = HashMap::new();
         filter.insert(
             PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"),
+            #[allow(clippy::single_range_in_vec_init)]
             LineNum::from_iter([3..4].iter().cloned()),
         );
         filter.insert(
             PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c"),
-            LineNum::from_iter([3..7, 14..u32::max_value()].iter().cloned()),
+            LineNum::from_iter([3..7, 14..u32::MAX].iter().cloned()),
         );
         filter.insert(
             PathBuf::from("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c"),
