@@ -120,9 +120,7 @@ impl Report {
         P: AsRef<Path>,
     {
         let reader = Reader::open_file(path)
-            .map_err(Into::into)
             .map_err(ReadError::Io)
-            .map_err(Into::into)
             .map_err(ParseError::Read)?;
         Self::from_reader(reader)
     }
