@@ -24,7 +24,8 @@ struct Opt {
     #[arg(long = "remap-path-prefix", value_name = "FROM=TO")]
     remap_path_prefix: Vec<PrefixMap>,
 
-    /// Remap source file path using regex, format: REGEX=REPLACEMENT (can repeat)
+    /// Remap source file path using regex, format: REGEX=REPLACEMENT (can repeat).
+    /// Supports capture groups: $1, $name, \1, \g<name>
     #[arg(long = "remap-path-regex", value_name = "REGEX=REPLACEMENT")]
     remap_path_regex: Vec<RegexMap>,
 
@@ -70,10 +71,8 @@ impl FromStr for RegexMap {
             .split_once('=')
             .ok_or_else(|| "expected REGEX=REPLACEMENT".to_string())?;
         let pattern = Regex::new(pat).map_err(|e| e.to_string())?;
-        Ok(RegexMap {
-            pattern,
-            replacement: rep.to_string(),
-        })
+        let replacement = normalize_replacement(rep);
+        Ok(RegexMap { pattern, replacement })
     }
 }
 
@@ -134,10 +133,154 @@ fn remap_path(path: &Path, prefixes: &[PrefixMap], regexes: &[RegexMap]) -> Path
     current
 }
 
+// Normalizes a user-provided regex replacement to Rust `regex` style.
+// Converts common group reference syntaxes into `$...` so the `regex` crate
+// can interpret them:
+// - `\1`, `\2`, ...  => `$1`, `$2`
+// - `\g<name>`       => `$name`
+// - already valid `$1`, `$name` are left unchanged
+// This enables `--remap-path-regex` to accept PCRE/Python-style replacements
+// without the user having to rewrite them. Characters not part of an escape
+// are passed through verbatim.
+fn normalize_replacement(src: &str) -> String {
+    let mut out = String::with_capacity(src.len());
+    let mut it = src.chars().peekable();
+    while let Some(c) = it.next() {
+        if c == '\\' {
+            match it.peek().copied() {
+                Some(d) if d.is_ascii_digit() => {
+                    let mut num = String::new();
+                    while let Some(d2) = it.peek().copied() {
+                        if d2.is_ascii_digit() {
+                            num.push(d2);
+                            let _ = it.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    out.push('$');
+                    out.push_str(&num);
+                    continue;
+                }
+                Some('g') => {
+                    let _ = it.next();
+                    if it.peek() == Some(&'<') {
+                        let _ = it.next();
+                        let mut name = String::new();
+                        while let Some(ch) = it.peek().copied() {
+                            if ch == '>' {
+                                let _ = it.next();
+                                break;
+                            }
+                            name.push(ch);
+                            let _ = it.next();
+                        }
+                        out.push('$');
+                        out.push_str(&name);
+                        continue;
+                    } else {
+                        out.push('\\');
+                        out.push('g');
+                        continue;
+                    }
+                }
+                _ => {
+                    out.push('\\');
+                }
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 fn main() {
     let opt = Opt::parse();
     if let Err(e) = run(opt) {
         eprintln!("{}", e);
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn normalize_replacement_variants() {
+        assert_eq!(normalize_replacement("$1"), "$1");
+        assert_eq!(normalize_replacement("$name"), "$name");
+        assert_eq!(normalize_replacement("\\1"), "$1");
+        assert_eq!(normalize_replacement("\\12"), "$12");
+        assert_eq!(normalize_replacement("\\g<name>"), "$name");
+        assert_eq!(normalize_replacement("\\g<1>"), "$1");
+        assert_eq!(normalize_replacement("pre\\g<name>post"), "pre$namepost");
+        // Unknown escapes are preserved
+        assert_eq!(normalize_replacement("\\x"), "\\x");
+    }
+
+    #[test]
+    fn remap_path_prefix_basic() {
+        let p = Path::new("/home/user/project/src/foo.c");
+        let prefixes = vec![PrefixMap {
+            from: PathBuf::from("/home/user"),
+            to: PathBuf::from("/mnt/user"),
+        }];
+        let regexes: Vec<RegexMap> = vec![];
+        let out = remap_path(p, &prefixes, &regexes);
+        assert_eq!(out.to_string_lossy(), "/mnt/user/project/src/foo.c");
+    }
+
+    #[test]
+    fn remap_path_prefix_then_regex_numeric_groups() {
+        let p = Path::new("/home/user/project/src/foo.c");
+        let prefixes = vec![PrefixMap {
+            from: PathBuf::from("/home/user"),
+            to: PathBuf::from("/data/user"),
+        }];
+        let re = RegexMap::from_str("^/data/(.+)=/src/$1").unwrap();
+        let regexes = vec![re];
+        let out = remap_path(p, &prefixes, &regexes);
+        assert_eq!(out.to_string_lossy(), "/src/user/project/src/foo.c");
+    }
+
+    #[test]
+    fn remap_path_regex_python_style_named_groups() {
+        let p = Path::new("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c");
+        let prefixes: Vec<PrefixMap> = vec![];
+        let re = RegexMap::from_str(
+            r"^/home/(?P<user>[^/]+)/(?P<rest>.+)=/mnt/\g<user>/src/$rest",
+        )
+        .unwrap();
+        let regexes = vec![re];
+        let out = remap_path(p, &prefixes, &regexes);
+        assert_eq!(
+            out.to_string_lossy(),
+            "/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"
+        );
+    }
+
+    #[test]
+    fn remap_path_prefix_windows_style() {
+        let p = Path::new("C:\\Users\\alice\\proj\\src\\foo.c");
+        let prefixes = vec![PrefixMap {
+            from: PathBuf::from("C:\\Users\\alice"),
+            to: PathBuf::from("D:\\workspace\\alice"),
+        }];
+        let regexes: Vec<RegexMap> = vec![];
+        let out = remap_path(p, &prefixes, &regexes);
+        assert_eq!(out.to_string_lossy(), "D:\\workspace\\alice\\proj\\src\\foo.c");
+    }
+
+    #[test]
+    fn remap_path_regex_windows_style_numeric_groups() {
+        let p = Path::new("C:\\Users\\alice\\proj\\src\\foo.c");
+        let prefixes: Vec<PrefixMap> = vec![];
+        let re = RegexMap::from_str(r"^C:\\Users\\([^\\]+)\\(.+)=D:\$1\code\$2").unwrap();
+        let regexes = vec![re];
+        let out = remap_path(p, &prefixes, &regexes);
+        assert_eq!(out.to_string_lossy(), "D:\\alice\\code\\proj\\src\\foo.c");
     }
 }
