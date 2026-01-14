@@ -13,8 +13,8 @@ mod tests;
 
 /// Represents all kinds of LCOV records.
 ///
-/// This `struct` can be created by parsing an LCOV record string by [`parse`] method (provided by the `FromStr` trait).
-/// This `struct` can be converted into an LCOV record string by [`to_string`] method (provided by the `ToString` trait).
+/// This `enum` can be created by parsing an LCOV record string by [`parse`] method (provided by the `FromStr` trait).
+/// This `enum` can be converted into an LCOV record string by [`to_string`] method (provided by the `ToString` trait).
 ///
 /// See those documentation for more.
 ///
