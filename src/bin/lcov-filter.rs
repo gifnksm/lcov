@@ -72,7 +72,10 @@ impl FromStr for RegexMap {
             .ok_or_else(|| "expected REGEX=REPLACEMENT".to_string())?;
         let pattern = Regex::new(pat).map_err(|e| e.to_string())?;
         let replacement = normalize_replacement(rep);
-        Ok(RegexMap { pattern, replacement })
+        Ok(RegexMap {
+            pattern,
+            replacement,
+        })
     }
 }
 
@@ -125,7 +128,10 @@ fn remap_path(path: &Path, prefixes: &[PrefixMap], regexes: &[RegexMap]) -> Path
     if !regexes.is_empty() {
         let mut s = current.to_string_lossy().into_owned();
         for m in regexes {
-            s = m.pattern.replace_all(&s, m.replacement.as_str()).into_owned();
+            s = m
+                .pattern
+                .replace_all(&s, m.replacement.as_str())
+                .into_owned();
         }
         current = PathBuf::from(s);
     }
@@ -250,10 +256,8 @@ mod tests {
     fn remap_path_regex_python_style_named_groups() {
         let p = Path::new("/home/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c");
         let prefixes: Vec<PrefixMap> = vec![];
-        let re = RegexMap::from_str(
-            r"^/home/(?P<user>[^/]+)/(?P<rest>.+)=/mnt/\g<user>/src/$rest",
-        )
-        .unwrap();
+        let re = RegexMap::from_str(r"^/home/(?P<user>[^/]+)/(?P<rest>.+)=/mnt/\g<user>/src/$rest")
+            .unwrap();
         let regexes = vec![re];
         let out = remap_path(p, &prefixes, &regexes);
         assert_eq!(
@@ -271,7 +275,10 @@ mod tests {
         }];
         let regexes: Vec<RegexMap> = vec![];
         let out = remap_path(p, &prefixes, &regexes);
-        assert_eq!(out.to_string_lossy(), "D:\\workspace\\alice\\proj\\src\\foo.c");
+        assert_eq!(
+            out.to_string_lossy(),
+            "D:\\workspace\\alice\\proj\\src\\foo.c"
+        );
     }
 
     #[test]
