@@ -19,11 +19,11 @@ use std::process;
 #[clap(about = "Merges LCOV tracefiles")]
 struct Opt {
     /// Disables varidation such as checksum checking
-    #[structopt(long = "loose")]
+    #[arg(long = "loose")]
     loose: bool,
 
     /// LCOV tracefiles to merge
-    #[structopt(name = "FILE")]
+    #[arg(name = "FILE")]
     files: Vec<PathBuf>,
 }
 

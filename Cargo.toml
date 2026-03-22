@@ -20,6 +20,7 @@ maintenance = { status = "passively-maintained" }
 [dependencies]
 clap = { version = "4.5.53", features = ["derive"] }
 lcov = { version = "0.8", path = "lcov" }
+regex = "1"
 
 [dev-dependencies]
 version-sync = "0.9.5"
