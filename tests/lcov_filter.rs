@@ -34,6 +34,8 @@ fn remap_path_prefix_basic() {
 
     assert!(out.contains("SF:/mnt/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"));
     assert!(out.contains("SF:/mnt/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c"));
+    assert!(out.contains("SF:/mnt/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c"));
+    assert!(out.contains("SF:/mnt/nksm/rhq/github.com/gifnksm/lcov/tests/fixtures/src/mul.c"));
     assert!(!out.contains("SF:/home/nksm/"));
 }
 
@@ -47,7 +49,11 @@ fn remap_path_regex_numeric_groups() {
     ]);
 
     assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"));
-    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c"));
+    assert!(
+        out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c")
+    );
+    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c"));
+    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/mul.c"));
     assert!(!out.contains("SF:/home/nksm/"));
 }
 
@@ -61,7 +67,10 @@ fn remap_path_regex_python_style_groups() {
     ]);
 
     assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/div.c"));
-    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c"));
+    assert!(
+        out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/fizzbuzz.c")
+    );
+    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/main.c"));
+    assert!(out.contains("SF:/mnt/nksm/src/rhq/github.com/gifnksm/lcov/tests/fixtures/src/mul.c"));
     assert!(!out.contains("SF:/home/nksm/"));
 }
-
