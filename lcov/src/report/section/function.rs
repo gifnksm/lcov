@@ -35,7 +35,7 @@ pub struct Value {
 }
 
 impl Merge for Value {
-    fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+    fn merge_checked(&mut self, other: Self) -> Result<(), MergeError> {
         if let Some(start_line) = other.start_line.as_ref() {
             if let Some(my_start_line) = self.start_line.as_ref() {
                 if start_line != my_start_line {

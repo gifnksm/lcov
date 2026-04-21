@@ -35,7 +35,7 @@ pub struct Value {
 }
 
 impl Merge for Value {
-    fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+    fn merge_checked(&mut self, other: Self) -> Result<(), MergeError> {
         if let Some(checksum) = other.checksum.as_ref() {
             if let Some(my_checksum) = self.checksum.as_ref() {
                 if checksum != my_checksum {

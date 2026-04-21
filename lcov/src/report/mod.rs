@@ -140,7 +140,7 @@ impl Report {
     /// # fn main() {}
     /// ```
     pub fn merge(&mut self, other: Self) -> Result<(), MergeError> {
-        self.sections.merge(other.sections)
+        self.sections.merge_checked(other.sections)
     }
 
     /// Merges a report into `self` with ignoring an Errors.
@@ -214,7 +214,7 @@ impl Iterator for IntoRecords {
 }
 
 trait Merge {
-    fn merge(&mut self, other: Self) -> Result<(), MergeError>;
+    fn merge_checked(&mut self, other: Self) -> Result<(), MergeError>;
     fn merge_lossy(&mut self, other: Self);
 }
 
@@ -223,13 +223,13 @@ where
     K: Ord,
     V: Merge,
 {
-    fn merge(&mut self, other: Self) -> Result<(), MergeError> {
+    fn merge_checked(&mut self, other: Self) -> Result<(), MergeError> {
         for (key, value) in other {
             match self.entry(key) {
                 Entry::Vacant(e) => {
                     let _ = e.insert(value);
                 }
-                Entry::Occupied(mut e) => e.get_mut().merge(value)?,
+                Entry::Occupied(mut e) => e.get_mut().merge_checked(value)?,
             }
         }
         Ok(())
