@@ -18,7 +18,7 @@ repository = "https://github.com/gifnksm/lcov/"
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 lcov = { version = "0.8", path = "lcov" }
 regex = "1"
 
