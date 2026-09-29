@@ -69,13 +69,25 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "cargo-readme"
-version = "3.3.3"
+version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1eb6777157f3f996589c9f4d008e14a4b4af43d793eae635f287439ebd471819"
+checksum = "5398c75501d20aaca64c64c8cdcffe23603a80f270587b3f6f91829ec8474a83"
 dependencies = [
+ "cargo_toml",
  "clap",
  "percent-encoding",
  "regex",
+ "serde",
+ "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "cargo_toml"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa61aec073ec94791433ddf3df2323ff9d1711557c2a0eefb0f99cb4f8dca520"
+dependencies = [
+ "semver",
  "serde",
  "toml 1.1.2+spec-1.1.0",
 ]
@@ -439,6 +451,9 @@ name = "semver"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56e6fa9c48d24d85fb3de5ad847117517440f6beceb7798af16b4a87d616b8d0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "serde"
